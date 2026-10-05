@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets to Supabase Data Migrator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen py-10 px-4">
+    <div class="max-w-4xl mx-auto space-y-8">
+        
+        <!-- Header -->
+        <div class="border-b border-slate-800 pb-6">
+            <div class="flex items-center space-x-3 mb-2">
+                <span class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl text-xl font-bold">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </span>
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Google Sheets &rarr; Supabase Migrator</h1>
+                    <p class="text-slate-400 text-sm">Upload your exported CSV from Google Sheets and import rows directly into your Supabase database table.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Step -->
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
+            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 text-xs flex items-center justify-center font-bold">1</span>
+                Supabase Credentials
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Project URL</label>
+                    <input type="text" id="supabaseUrl" placeholder="https://your-project.supabase.co" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Anon / Service Role Key</label>
+                    <input type="password" id="supabaseKey" placeholder="eyJhbGciOi..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Target Table Name</label>
+                    <input type="text" id="targetTable" value="records" placeholder="records" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="testConnection()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-medium py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plug"></i> Test Connection
+                    </button>
+                </div>
+            </div>
+            <div id="connectionStatus" class="hidden text-xs rounded-lg p-2.5"></div>
+        </div>
+
+        <!-- CSV File Upload -->
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
+            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 text-xs flex items-center justify-center font-bold">2</span>
+                Google Sheet CSV Export
+            </h2>
+            <div class="border-2 border-dashed border-slate-700 hover:border-emerald-500/50 rounded-xl p-8 text-center cursor-pointer transition" onclick="document.getElementById('csvFileInput').click()">
+                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileSelect(event)">
+                <i class="fa-solid fa-file-csv text-4xl text-slate-400 mb-3"></i>
+                <p class="text-sm font-medium text-white" id="fileNameDisplay">Click or drag & drop your Google Sheet CSV here</p>
+                <p class="text-xs text-slate-500 mt-1">Exported via: Google Sheets &rarr; File &rarr; Download &rarr; Comma Separated Values (.csv)</p>
+            </div>
+
+            <!-- Preview Table -->
+            <div id="previewContainer" class="hidden space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-slate-200">Data Preview (<span id="rowCount">0</span> rows detected)</h3>
+                    <button onclick="startMigration()" id="migrateBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-5 rounded-xl text-sm transition shadow-lg shadow-emerald-900/30 flex items-center gap-2">
+                        <i class="fa-solid fa-rocket"></i> Start Migration to Supabase
+                    </button>
+                </div>
+                <div class="overflow-x-auto border border-slate-700/80 rounded-xl max-h-64">
+                    <table class="w-full text-left text-xs font-mono text-slate-300" id="previewTable">
+                        <!-- Populated by JS -->
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress / Logs -->
+        <div id="logSection" class="hidden bg-slate-800/80 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-3">
+            <h2 class="text-lg font-semibold text-white flex items-center justify-between">
+                <span>Migration Progress</span>
+                <span id="progressText" class="text-xs font-mono text-emerald-400">0%</span>
+            </h2>
+            <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden">
+                <div id="progressBar" class="bg-emerald-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <div id="logOutput" class="bg-slate-950 p-4 rounded-xl font-mono text-xs text-slate-400 max-h-48 overflow-y-auto space-y-1">
+                <!-- Logs appended here -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let parsedData = [];
+        let clientInstance = null;
+
+        function getSupabase() {
+            const url = document.getElementById('supabaseUrl').value.trim();
+            const key = document.getElementById('supabaseKey').value.trim();
+            if (!url || !key) {
+                alert("Please provide your Supabase URL and Key first.");
+                return null;
+            }
+            return window.supabase.createClient(url, key);
+        }
+
+        async function testConnection() {
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.className = 'text-xs rounded-lg p-2.5 bg-slate-900 text-slate-300 block';
+            statusEl.innerText = "Connecting to Supabase...";
+            
+            try {
+                const client = getSupabase();
+                if (!client) return;
+                const table = document.getElementById('targetTable').value.trim() || 'records';
+                const { data, error } = await client.from(table).select('count', { count: 'exact', head: true });
+                if (error) throw error;
+                
+                statusEl.className = 'text-xs rounded-lg p-2.5 bg-emerald-950 text-emerald-400 border border-emerald-800 block';
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Successfully connected to table "<strong>${table}</strong>"!`;
+            } catch (err) {
+                statusEl.className = 'text-xs rounded-lg p-2.5 bg-rose-950 text-rose-300 border border-rose-800 block';
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Connection failed: ${err.message || err}`;
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('fileNameDisplay').innerText = `Selected: ${file.name} (${Math.round(file.size / 1024)} KB)`;
+            
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    parsedData = results.data;
+                    renderPreview(results.data, results.meta.fields);
+                }
+            });
+        }
+
+        function renderPreview(rows, headers) {
+            if (!rows || rows.length === 0) return;
+            document.getElementById('rowCount').innerText = rows.length;
+            document.getElementById('previewContainer').classList.remove('hidden');
+
+            const table = document.getElementById('previewTable');
+            let thead = `<thead class="bg-slate-900 border-b border-slate-700"><tr>`;
+            headers.forEach(h => {
+                thead += `<th class="p-3 text-slate-400 font-medium">${h}</th>`;
+            });
+            thead += `</tr></thead>`;
+
+            let tbody = `<tbody class="divide-y divide-slate-800">`;
+            rows.slice(0, 10).forEach(row => {
+                tbody += `<tr class="hover:bg-slate-900/50">`;
+                headers.forEach(h => {
+                    tbody += `<td class="p-3 truncate max-w-xs">${row[h] || ''}</td>`;
+                });
+                tbody += `</tr>`;
+            });
+            tbody += `</tbody>`;
+            table.innerHTML = thead + tbody;
+        }
+
+        async function startMigration() {
+            if (!parsedData || parsedData.length === 0) {
+                alert("No CSV data to migrate.");
+                return;
+            }
+
+            const client = getSupabase();
+            if (!client) return;
+
+            const table = document.getElementById('targetTable').value.trim() || 'records';
+            const logSection = document.getElementById('logSection');
+            const logOutput = document.getElementById('logOutput');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const migrateBtn = document.getElementById('migrateBtn');
+
+            logSection.classList.remove('hidden');
+            logOutput.innerHTML = '';
+            migrateBtn.disabled = true;
+            migrateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            appendLog(`Starting migration of ${parsedData.length} records into table "${table}"...`);
+
+            // Batch insert in chunks of 50
+            const chunkSize = 50;
+            let successCount = 0;
+            let failCount = 0;
+
+            for (let i = 0; i < parsedData.length; i += chunkSize) {
+                const chunk = parsedData.slice(i, i + chunkSize);
+                try {
+                    const { error } = await client.from(table).insert(chunk);
+                    if (error) throw error;
+                    successCount += chunk.length;
+                    appendLog(`Imported batch ${i + 1} - ${Math.min(i + chunkSize, parsedData.length)} successfully.`);
+                } catch (err) {
+                    failCount += chunk.length;
+                    appendLog(`Batch error (${i + 1} - ${Math.min(i + chunkSize, parsedData.length)}): ${err.message}`, true);
+                }
+
+                const pct = Math.round(((i + chunk.length) / parsedData.length) * 100);
+                progressBar.style.width = `${pct}%`;
+                progressText.innerText = `${pct}%`;
+            }
+
+            appendLog(`Migration finished! Successfully migrated: ${successCount}, Failed: ${failCount}.`);
+            migrateBtn.disabled = false;
+            migrateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function appendLog(msg, isError = false) {
+            const logOutput = document.getElementById('logOutput');
+            const div = document.createElement('div');
+            div.className = isError ? 'text-rose-400' : 'text-emerald-400';
+            div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logOutput.appendChild(div);
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+    </script>
+</body>
+</html>
