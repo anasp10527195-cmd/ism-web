@@ -220,7 +220,6 @@
         return this.getStudentDetails(identifier);
       }
 
-      // Union
       const cleanName = String(identifier || '').trim();
       const unions = await api(`unions?Name=eq.${encodeURIComponent(cleanName)}`);
       const union = unions && unions[0] ? unions[0] : { Name: cleanName, Class: 'General' };
@@ -279,7 +278,6 @@
         body: JSON.stringify(inserts)
       });
 
-      // Update Stock counts
       for (const item of items) {
         try {
           const current = await api(`Stock?Product=eq.${encodeURIComponent(item.product)}`);
@@ -355,17 +353,41 @@
       return { success: true, message: 'Payment updated successfully.' };
     },
 
+    // Cancel purchase AND restore stock quantity
     async cancelPurchase(id) {
-      await api(`Purchases?ID=eq.${encodeURIComponent(id)}`, {
-        method: 'DELETE'
-      });
-      return { success: true, message: 'Purchase canceled successfully.' };
+      // Fetch the purchase first so we know what to restock
+      let productName = null;
+      let purchaseQty = 1;
+      try {
+        const rows = await api(`Purchases?ID=eq.${encodeURIComponent(id)}`);
+        if (rows && rows.length > 0) {
+          productName = rows[0].Product;
+          purchaseQty = Number(rows[0].Qty || 1);
+        }
+      } catch (_) {}
+
+      // Delete the purchase
+      await api(`Purchases?ID=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+
+      // Restore stock quantity
+      if (productName) {
+        try {
+          const stockRows = await api(`Stock?Product=eq.${encodeURIComponent(productName)}`);
+          if (stockRows && stockRows.length > 0) {
+            const newQty = Number(stockRows[0].Qty || 0) + purchaseQty;
+            await api(`Stock?ID=eq.${encodeURIComponent(stockRows[0].ID)}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ Qty: newQty })
+            });
+          }
+        } catch (_) {}
+      }
+
+      return { success: true, message: 'Purchase canceled and stock restored.' };
     },
 
     async cancelPayment(id) {
-      await api(`payments?ID=eq.${encodeURIComponent(id)}`, {
-        method: 'DELETE'
-      });
+      await api(`payments?ID=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
       return { success: true, message: 'Payment canceled successfully.' };
     },
 
@@ -397,10 +419,7 @@
           });
         } catch (_) {}
       }
-
-      await api(`Students?AdNo=eq.${encodeURIComponent(cleanAdNo)}`, {
-        method: 'DELETE'
-      });
+      await api(`Students?AdNo=eq.${encodeURIComponent(cleanAdNo)}`, { method: 'DELETE' });
       return { success: true, message: 'Student deleted successfully.' };
     },
 
@@ -412,10 +431,7 @@
         Date: e.date || new Date().toISOString().split('T')[0],
         CreatedAt: new Date().toISOString()
       }));
-      await api('Expense', {
-        method: 'POST',
-        body: JSON.stringify(rows)
-      });
+      await api('Expense', { method: 'POST', body: JSON.stringify(rows) });
       return { success: true, message: 'Expenses saved successfully.' };
     },
 
@@ -424,20 +440,14 @@
     },
 
     async deleteExpense(id) {
-      await api(`Expense?ID=eq.${encodeURIComponent(id)}`, {
-        method: 'DELETE'
-      });
+      await api(`Expense?ID=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
       return { success: true, message: 'Expense deleted successfully.' };
     },
 
     async updateExpense(id, desc, amount, date) {
       await api(`Expense?ID=eq.${encodeURIComponent(id)}`, {
         method: 'PATCH',
-        body: JSON.stringify({
-          Description: desc,
-          Amount: Number(amount || 0),
-          Date: date
-        })
+        body: JSON.stringify({ Description: desc, Amount: Number(amount || 0), Date: date })
       });
       return { success: true, message: 'Expense updated successfully.' };
     },
@@ -500,7 +510,6 @@
 
   /**
    * google.script.run emulator
-   * Creates a fluent proxy for withSuccessHandler / withFailureHandler
    */
   class ScriptRunProxy {
     constructor(successCb = null, failureCb = null) {
@@ -539,10 +548,9 @@
     }
   }
 
-  // Bind to global scope so existing page scripts call our adapter!
   window.google = window.google || {};
   window.google.script = window.google.script || {};
   window.google.script.run = new ScriptRunProxy();
 
-  console.log('✅ Supabase adapter initialized for Ihsan Super Market');
+  console.log('✅ Supabase adapter v3 initialized — cancelPurchase restocks inventory');
 })();
