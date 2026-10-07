@@ -2295,27 +2295,88 @@ input:where([type='button'], [type='reset'], [type='submit']),
     },
 
     async getReportData(type, period, from, to) {
+      // Fetch all base data
       const purchases = await api('Purchases?select=*') || [];
-      const payments = await api('payments?select=*') || [];
-      const expenses = await api('Expense?select=*&order=Date.desc') || [];
+      const payments  = await api('payments?select=*')  || [];
 
+      // ── Students Due Report ──────────────────────────────────────────────
+      if (type === 'Students') {
+        const classFilter = String(period || '').trim();
+        let students = await api('Students?select=AdNo,Name,Class&order=AdNo.asc') || [];
+        if (classFilter) {
+          students = students.filter(s => String(s.Class).trim() === classFilter);
+        }
+
+        const data = [];
+        let slNo = 1;
+        for (const s of students) {
+          const adNo = String(s.AdNo);
+          const due  = purchases
+            .filter(p => p.BuyerType === 'Student' && String(p.Identifier) === adNo)
+            .reduce((sum, p) => sum + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
+          const paid = payments
+            .filter(p => p.PayerType === 'Student' && String(p.Identifier) === adNo)
+            .reduce((sum, p) => sum + Number(p.Amount || 0), 0);
+          const balance = due - paid;
+          if (balance !== 0) {
+            data.push({ slNo: slNo++, adNo: s.AdNo, name: s.Name, balance });
+          }
+        }
+
+        return {
+          success: true,
+          title: 'Students Due Report',
+          headers: ['Sl.No', 'Ad.No', 'Name', 'Balance (₹)'],
+          data
+        };
+      }
+
+      // ── Unions Due Report ────────────────────────────────────────────────
+      if (type === 'Union') {
+        const unions = await api('unions?select=Name,Class&order=Name.asc') || [];
+
+        const data = [];
+        let slNo = 1;
+        for (const u of unions) {
+          const name = String(u.Name || '').trim();
+          const due  = purchases
+            .filter(p => p.BuyerType === 'Union' && String(p.Identifier).trim() === name)
+            .reduce((sum, p) => sum + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
+          const paid = payments
+            .filter(p => p.PayerType === 'Union' && String(p.Identifier).trim() === name)
+            .reduce((sum, p) => sum + Number(p.Amount || 0), 0);
+          const balance = due - paid;
+          if (balance !== 0) {
+            data.push({ slNo: slNo++, name, balance });
+          }
+        }
+
+        return {
+          success: true,
+          title: 'Unions Due Report',
+          headers: ['Sl.No', 'Union Name', 'Balance (₹)'],
+          data
+        };
+      }
+
+      // ── Financial Status Summary (Status / default) ──────────────────────
+      const expenses = await api('Expense?select=*&order=Date.desc') || [];
       const fromDate = from || '2000-01-01';
-      const toDate = to || '2099-12-31';
+      const toDate   = to   || '2099-12-31';
 
       const filteredPurchases = purchases.filter(p => !p.Date || (p.Date >= fromDate && p.Date <= toDate));
-      const filteredPayments = payments.filter(p => !p.Date || (p.Date >= fromDate && p.Date <= toDate));
+      const filteredPayments  = payments.filter(p  => !p.Date || (p.Date >= fromDate && p.Date <= toDate));
 
       const totalPurchasedAmount = filteredPurchases.reduce((s, p) => s + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
-      const totalPaidAmount = filteredPayments.reduce((s, p) => s + Number(p.Amount || 0), 0);
-      const income = totalPurchasedAmount;
-      const balance = totalPurchasedAmount - totalPaidAmount;
+      const totalPaidAmount      = filteredPayments.reduce((s,  p) => s + Number(p.Amount || 0), 0);
+      const balance              = totalPurchasedAmount - totalPaidAmount;
 
       return {
         success: true,
         title: 'FINANCIAL STATUS SUMMARY REPORT',
         fromDate: from,
         toDate: to,
-        income,
+        income: totalPurchasedAmount,
         totalPurchasedAmount,
         totalPaidAmount,
         balance,
@@ -5830,6 +5891,9 @@ document.addEventListener('click', function(e) {
 </script>
 
 
+
+
+
 <!-- ISM UI Patches v3: dialog positions, top toasts, admin settings -->
 <style id="ism-ui-patches-css">
 /* ── Confirm dialogs: full-screen centered dark backdrop ── */
@@ -5984,7 +6048,7 @@ function ismShowNotif(title, msg, type, ms) {
 
 // 3. Override showAppDialog:
 //    • message  → top notification (auto-dismiss, no button)
-//    • confirm  → centered full-screen modal with dark backdrop
+//    • confirm  → centered full-screen modal with dark backdrop (inline styles = highest priority)
 (function() {
   var orig = window.showAppDialog;
   if (!orig) return;
@@ -5996,15 +6060,48 @@ function ismShowNotif(title, msg, type, ms) {
       ismShowNotif(options.title || '', options.message || '', t, ms);
       return Promise.resolve(true);
     }
-    // confirm / prompt: original, but force center class
+    // confirm / prompt: use original, then FORCE center with inline styles
     var result = orig(options);
     var modal = document.getElementById('app-dialog');
     if (modal) {
       modal.classList.remove('app-dialog-top');
       modal.classList.add('app-dialog-center');
+      // Inline styles override ALL CSS (highest specificity possible)
+      modal.style.cssText = [
+        'position:fixed',
+        'inset:0',
+        'z-index:300',
+        'display:flex',
+        'align-items:center',
+        'justify-content:center',
+        'padding:1rem',
+        'background:rgba(8,14,34,0.88)',
+        'backdrop-filter:blur(12px)',
+        '-webkit-backdrop-filter:blur(12px)',
+        'pointer-events:auto'
+      ].join(';');
+      // Style the inner card too
+      var card = modal.querySelector('.app-dialog-card');
+      if (card) {
+        card.style.borderRadius = '20px';
+        card.style.boxShadow = '0 40px 100px rgba(0,0,0,0.55)';
+        card.style.animation = 'ismModalPop 0.28s cubic-bezier(0.34,1.4,0.64,1)';
+      }
     }
     return result;
   };
+
+  // Also override closeAppDialog to reset inline styles
+  var origClose = window.closeAppDialog;
+  if (origClose) {
+    window.closeAppDialog = function() {
+      var modal = document.getElementById('app-dialog');
+      if (modal) {
+        modal.style.cssText = '';
+      }
+      origClose.apply(this, arguments);
+    };
+  }
 })();
 
 // 4. Admin Settings functions

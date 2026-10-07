@@ -453,27 +453,88 @@
     },
 
     async getReportData(type, period, from, to) {
+      // Fetch all base data
       const purchases = await api('Purchases?select=*') || [];
-      const payments = await api('payments?select=*') || [];
-      const expenses = await api('Expense?select=*&order=Date.desc') || [];
+      const payments  = await api('payments?select=*')  || [];
 
+      // ── Students Due Report ──────────────────────────────────────────────
+      if (type === 'Students') {
+        const classFilter = String(period || '').trim();
+        let students = await api('Students?select=AdNo,Name,Class&order=AdNo.asc') || [];
+        if (classFilter) {
+          students = students.filter(s => String(s.Class).trim() === classFilter);
+        }
+
+        const data = [];
+        let slNo = 1;
+        for (const s of students) {
+          const adNo = String(s.AdNo);
+          const due  = purchases
+            .filter(p => p.BuyerType === 'Student' && String(p.Identifier) === adNo)
+            .reduce((sum, p) => sum + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
+          const paid = payments
+            .filter(p => p.PayerType === 'Student' && String(p.Identifier) === adNo)
+            .reduce((sum, p) => sum + Number(p.Amount || 0), 0);
+          const balance = due - paid;
+          if (balance !== 0) {
+            data.push({ slNo: slNo++, adNo: s.AdNo, name: s.Name, balance });
+          }
+        }
+
+        return {
+          success: true,
+          title: 'Students Due Report',
+          headers: ['Sl.No', 'Ad.No', 'Name', 'Balance (₹)'],
+          data
+        };
+      }
+
+      // ── Unions Due Report ────────────────────────────────────────────────
+      if (type === 'Union') {
+        const unions = await api('unions?select=Name,Class&order=Name.asc') || [];
+
+        const data = [];
+        let slNo = 1;
+        for (const u of unions) {
+          const name = String(u.Name || '').trim();
+          const due  = purchases
+            .filter(p => p.BuyerType === 'Union' && String(p.Identifier).trim() === name)
+            .reduce((sum, p) => sum + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
+          const paid = payments
+            .filter(p => p.PayerType === 'Union' && String(p.Identifier).trim() === name)
+            .reduce((sum, p) => sum + Number(p.Amount || 0), 0);
+          const balance = due - paid;
+          if (balance !== 0) {
+            data.push({ slNo: slNo++, name, balance });
+          }
+        }
+
+        return {
+          success: true,
+          title: 'Unions Due Report',
+          headers: ['Sl.No', 'Union Name', 'Balance (₹)'],
+          data
+        };
+      }
+
+      // ── Financial Status Summary (Status / default) ──────────────────────
+      const expenses = await api('Expense?select=*&order=Date.desc') || [];
       const fromDate = from || '2000-01-01';
-      const toDate = to || '2099-12-31';
+      const toDate   = to   || '2099-12-31';
 
       const filteredPurchases = purchases.filter(p => !p.Date || (p.Date >= fromDate && p.Date <= toDate));
-      const filteredPayments = payments.filter(p => !p.Date || (p.Date >= fromDate && p.Date <= toDate));
+      const filteredPayments  = payments.filter(p  => !p.Date || (p.Date >= fromDate && p.Date <= toDate));
 
       const totalPurchasedAmount = filteredPurchases.reduce((s, p) => s + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
-      const totalPaidAmount = filteredPayments.reduce((s, p) => s + Number(p.Amount || 0), 0);
-      const income = totalPurchasedAmount;
-      const balance = totalPurchasedAmount - totalPaidAmount;
+      const totalPaidAmount      = filteredPayments.reduce((s,  p) => s + Number(p.Amount || 0), 0);
+      const balance              = totalPurchasedAmount - totalPaidAmount;
 
       return {
         success: true,
         title: 'FINANCIAL STATUS SUMMARY REPORT',
         fromDate: from,
         toDate: to,
-        income,
+        income: totalPurchasedAmount,
         totalPurchasedAmount,
         totalPaidAmount,
         balance,
