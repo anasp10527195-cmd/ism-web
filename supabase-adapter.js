@@ -26,7 +26,9 @@
 
   const handlers = {
     async loginAdmin(u, p) {
-      const admins = await api(`Admin?Username=eq.${encodeURIComponent(u)}&Password=eq.${encodeURIComponent(p)}`);
+      const cleanU = String(u || '').trim();
+      const cleanP = String(p || '').trim();
+      const admins = await api(`Admin?Username=eq.${encodeURIComponent(cleanU)}&Password=eq.${encodeURIComponent(cleanP)}`);
       if (admins && admins.length > 0) {
         return { success: true, message: 'Signed in successfully.' };
       }
@@ -35,14 +37,20 @@
 
     async getStudentDetails(adNo) {
       const cleanAdNo = String(adNo || '').trim();
-      const students = await api(`Students?AdNo=eq.${encodeURIComponent(cleanAdNo)}`);
+      let students = await api(`Students?AdNo=eq.${encodeURIComponent(cleanAdNo)}`);
+      if (!students || students.length === 0) {
+        if (!isNaN(cleanAdNo)) {
+          students = await api(`Students?AdNo=eq.${Number(cleanAdNo)}`);
+        }
+      }
       if (!students || students.length === 0) {
         return { success: false, message: 'Admission Number not found.' };
       }
       const student = students[0];
+      const actualAdNo = String(student.AdNo);
 
-      const purchases = await api(`Purchases?BuyerType=eq.Student&Identifier=eq.${encodeURIComponent(cleanAdNo)}&order=Date.desc,Time.desc`) || [];
-      const payments = await api(`payments?PayerType=eq.Student&Identifier=eq.${encodeURIComponent(cleanAdNo)}&order=Date.desc,Time.desc`) || [];
+      const purchases = await api(`Purchases?BuyerType=eq.Student&Identifier=eq.${encodeURIComponent(actualAdNo)}&order=Date.desc,Time.desc`) || [];
+      const payments = await api(`payments?PayerType=eq.Student&Identifier=eq.${encodeURIComponent(actualAdNo)}&order=Date.desc,Time.desc`) || [];
 
       const dueAmount = purchases.reduce((sum, p) => sum + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
       const paidAmount = payments.reduce((sum, p) => sum + Number(p.Amount || 0), 0);
@@ -78,7 +86,12 @@
 
     async getStudentRecord(adNo) {
       const cleanAdNo = String(adNo || '').trim();
-      const students = await api(`Students?AdNo=eq.${encodeURIComponent(cleanAdNo)}`);
+      let students = await api(`Students?AdNo=eq.${encodeURIComponent(cleanAdNo)}`);
+      if (!students || students.length === 0) {
+        if (!isNaN(cleanAdNo)) {
+          students = await api(`Students?AdNo=eq.${Number(cleanAdNo)}`);
+        }
+      }
       if (!students || students.length === 0) {
         return { success: false, message: 'Student not found.' };
       }
@@ -96,13 +109,18 @@
 
     async getLiveStock() {
       const rows = await api('Stock?select=*&order=Product.asc') || [];
-      return rows.filter(r => r.Product && r.Product.trim()).map(r => ({
-        id: r.ID || r.Product,
-        rowKey: r.ID || r.Product,
-        product: r.Product,
-        qty: Number(r.Qty || 0),
-        price: Number(r.Price || 0)
-      }));
+      return rows.filter(r => r.Product && r.Product.trim()).map(r => {
+        const qty = Number(r.Qty || 0);
+        return {
+          id: r.ID || r.Product,
+          rowKey: r.ID || r.Product,
+          product: r.Product,
+          name: r.Product,
+          qty: qty,
+          price: Number(r.Price || 0),
+          status: qty > 0 ? 'In Stock' : 'Out of Stock'
+        };
+      });
     },
 
     async getStockList() {
@@ -125,8 +143,10 @@
           id: s.ID,
           rowKey: s.ID,
           product: s.Product,
+          name: s.Product,
           qty: s.Qty,
-          price: s.Price
+          price: s.Price,
+          status: Number(s.Qty || 0) > 0 ? 'In Stock' : 'Out of Stock'
         }
       };
     },

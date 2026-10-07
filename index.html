@@ -1868,7 +1868,9 @@ input:where([type='button'], [type='reset'], [type='submit']),
 
   const handlers = {
     async loginAdmin(u, p) {
-      const admins = await api(`Admin?Username=eq.${encodeURIComponent(u)}&Password=eq.${encodeURIComponent(p)}`);
+      const cleanU = String(u || '').trim();
+      const cleanP = String(p || '').trim();
+      const admins = await api(`Admin?Username=eq.${encodeURIComponent(cleanU)}&Password=eq.${encodeURIComponent(cleanP)}`);
       if (admins && admins.length > 0) {
         return { success: true, message: 'Signed in successfully.' };
       }
@@ -1877,14 +1879,20 @@ input:where([type='button'], [type='reset'], [type='submit']),
 
     async getStudentDetails(adNo) {
       const cleanAdNo = String(adNo || '').trim();
-      const students = await api(`Students?AdNo=eq.${encodeURIComponent(cleanAdNo)}`);
+      let students = await api(`Students?AdNo=eq.${encodeURIComponent(cleanAdNo)}`);
+      if (!students || students.length === 0) {
+        if (!isNaN(cleanAdNo)) {
+          students = await api(`Students?AdNo=eq.${Number(cleanAdNo)}`);
+        }
+      }
       if (!students || students.length === 0) {
         return { success: false, message: 'Admission Number not found.' };
       }
       const student = students[0];
+      const actualAdNo = String(student.AdNo);
 
-      const purchases = await api(`Purchases?BuyerType=eq.Student&Identifier=eq.${encodeURIComponent(cleanAdNo)}&order=Date.desc,Time.desc`) || [];
-      const payments = await api(`payments?PayerType=eq.Student&Identifier=eq.${encodeURIComponent(cleanAdNo)}&order=Date.desc,Time.desc`) || [];
+      const purchases = await api(`Purchases?BuyerType=eq.Student&Identifier=eq.${encodeURIComponent(actualAdNo)}&order=Date.desc,Time.desc`) || [];
+      const payments = await api(`payments?PayerType=eq.Student&Identifier=eq.${encodeURIComponent(actualAdNo)}&order=Date.desc,Time.desc`) || [];
 
       const dueAmount = purchases.reduce((sum, p) => sum + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
       const paidAmount = payments.reduce((sum, p) => sum + Number(p.Amount || 0), 0);
@@ -1920,7 +1928,12 @@ input:where([type='button'], [type='reset'], [type='submit']),
 
     async getStudentRecord(adNo) {
       const cleanAdNo = String(adNo || '').trim();
-      const students = await api(`Students?AdNo=eq.${encodeURIComponent(cleanAdNo)}`);
+      let students = await api(`Students?AdNo=eq.${encodeURIComponent(cleanAdNo)}`);
+      if (!students || students.length === 0) {
+        if (!isNaN(cleanAdNo)) {
+          students = await api(`Students?AdNo=eq.${Number(cleanAdNo)}`);
+        }
+      }
       if (!students || students.length === 0) {
         return { success: false, message: 'Student not found.' };
       }
@@ -1938,13 +1951,18 @@ input:where([type='button'], [type='reset'], [type='submit']),
 
     async getLiveStock() {
       const rows = await api('Stock?select=*&order=Product.asc') || [];
-      return rows.filter(r => r.Product && r.Product.trim()).map(r => ({
-        id: r.ID || r.Product,
-        rowKey: r.ID || r.Product,
-        product: r.Product,
-        qty: Number(r.Qty || 0),
-        price: Number(r.Price || 0)
-      }));
+      return rows.filter(r => r.Product && r.Product.trim()).map(r => {
+        const qty = Number(r.Qty || 0);
+        return {
+          id: r.ID || r.Product,
+          rowKey: r.ID || r.Product,
+          product: r.Product,
+          name: r.Product,
+          qty: qty,
+          price: Number(r.Price || 0),
+          status: qty > 0 ? 'In Stock' : 'Out of Stock'
+        };
+      });
     },
 
     async getStockList() {
@@ -1967,8 +1985,10 @@ input:where([type='button'], [type='reset'], [type='submit']),
           id: s.ID,
           rowKey: s.ID,
           product: s.Product,
+          name: s.Product,
           qty: s.Qty,
-          price: s.Price
+          price: s.Price,
+          status: Number(s.Qty || 0) > 0 ? 'In Stock' : 'Out of Stock'
         }
       };
     },
@@ -2597,6 +2617,101 @@ input:where([type='button'], [type='reset'], [type='submit']),
     }
 
   </style>
+
+<style id="custom-supermarket-theme">
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      --primary-color: #0d9488;
+      --bg-color: #0f172a;
+      --card-bg: #ffffff;
+      --text-color: #0f172a;
+      --border-color: #cbd5e1;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', Inter, ui-sans-serif, system-ui, sans-serif !important;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.86) 0%, rgba(15, 23, 42, 0.78) 50%, rgba(13, 148, 136, 0.72) 100%), 
+                  url('https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=1920&auto=format&fit=crop') center center / cover no-repeat fixed !important;
+      min-height: 100vh !important;
+      color: #0f172a !important;
+    }
+
+    /* Solid, crisp, professional card and modal styling - NO muddy transparency */
+    .glass-card, .app-dialog-card {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+      backdrop-filter: none !important;
+      opacity: 1 !important;
+      color: #0f172a !important;
+    }
+
+    /* Modal backdrops - deep, clean, elegant dark focus */
+    .bg-black\/60, .app-dialog-backdrop {
+      background-color: rgba(15, 23, 42, 0.88) !important;
+      backdrop-filter: blur(8px) !important;
+    }
+
+    /* Modal dialog inner cards */
+    #auth-modal > div,
+    #modal-live-stock > div,
+    #modal-edit-payment > div,
+    #modal-edit-purchase > div,
+    #modal-edit-student > div,
+    #modal-edit-stock > div,
+    #modal-edit-expense > div {
+      background: #ffffff !important;
+      opacity: 1 !important;
+      color: #0f172a !important;
+      border-radius: 1.25rem !important;
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: 0 30px 70px -12px rgba(0, 0, 0, 0.55) !important;
+    }
+
+    /* Table styling inside modals */
+    #live-stock-table-body tr, #admin-stock-table-body tr {
+      background: #ffffff !important;
+      color: #1e293b !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+    }
+    #live-stock-table-body tr:hover, #admin-stock-table-body tr:hover {
+      background: #f0fdfa !important;
+    }
+
+    /* Header styling */
+    .glass-dark {
+      background: rgba(15, 23, 42, 0.96) !important;
+      backdrop-filter: blur(12px) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+
+    /* Dashboard cards - solid, clear, high contrast */
+    .portal-hero {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .quick-option {
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important;
+    }
+    .quick-option:hover {
+      background: #f8fafc !important;
+      border-color: #0d9488 !important;
+      transform: translateY(-2px);
+    }
+
+    /* Ensure z-index layering for live stock modal */
+    #modal-live-stock {
+      z-index: 90 !important;
+    }
+    #auth-modal {
+      z-index: 50 !important;
+    }
+</style>
 </head>
 <body class="min-h-screen text-slate-800 antialiased flex flex-col">
 
