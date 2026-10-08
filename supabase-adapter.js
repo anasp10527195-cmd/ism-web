@@ -54,7 +54,7 @@
 
       const dueAmount = purchases.reduce((sum, p) => sum + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
       const paidAmount = payments.reduce((sum, p) => sum + Number(p.Amount || 0), 0);
-      const balance = dueAmount - paidAmount;
+      const balance = paidAmount - dueAmount;
 
       return {
         success: true,
@@ -185,6 +185,22 @@
       }));
     },
 
+    async addSingleUnion(name, className) {
+      await api('unions', {
+        method: 'POST',
+        body: JSON.stringify([{ Name: name.trim(), Class: (className || '').trim() }])
+      });
+      return { success: true, message: 'Union added successfully.' };
+    },
+
+    async addSingleStudent(adNo, name, className, photoUrl) {
+      await api('Students', {
+        method: 'POST',
+        body: JSON.stringify([{ AdNo: String(adNo).trim(), Name: name.trim(), Class: className.trim(), PhotoUrl: photoUrl || '' }])
+      });
+      return { success: true, message: 'Student added successfully.' };
+    },
+
     async getLedgerUnionList(q) {
       const all = await this.getAllUnions();
       const filter = String(q || '').trim().toLowerCase();
@@ -229,7 +245,7 @@
 
       const dueAmount = purchases.reduce((sum, p) => sum + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
       const paidAmount = payments.reduce((sum, p) => sum + Number(p.Amount || 0), 0);
-      const balance = dueAmount - paidAmount;
+      const balance = paidAmount - dueAmount;
 
       return {
         success: true,
@@ -262,16 +278,34 @@
       const dateStr = now.toISOString().split('T')[0];
       const timeStr = now.toLocaleTimeString();
 
-      const inserts = items.map((item, idx) => ({
-        ID: 'PUR_' + Date.now() + '_' + idx,
-        BuyerType: buyerType,
-        Identifier: String(identifier).trim(),
-        Product: item.product,
-        Qty: Number(item.qty || 1),
-        Price: Number(item.price || 0),
-        Date: dateStr,
-        Time: timeStr
-      }));
+      // Fetch stock for price lookup (items from UI have specialPrice not price)
+      const stockAll = await api('Stock?select=*').catch(() => []) || [];
+
+      const inserts = items.map((item, idx) => {
+        // specialPrice is the total line price (price × qty), price is per-unit
+        // Try: item.price, then item.specialPrice / qty, then stock price
+        let unitPrice = Number(item.price || 0);
+        if (unitPrice === 0 && item.specialPrice !== '' && item.specialPrice !== undefined) {
+          const qty = Number(item.qty || 1);
+          unitPrice = qty > 0 ? Number(item.specialPrice) / qty : 0;
+        }
+        if (unitPrice === 0) {
+          const stockMatch = stockAll.find(s =>
+            String(s.Product || '').toLowerCase() === String(item.product || '').toLowerCase()
+          );
+          if (stockMatch) unitPrice = Number(stockMatch.Price || 0);
+        }
+        return {
+          ID: 'PUR_' + Date.now() + '_' + idx,
+          BuyerType: buyerType,
+          Identifier: String(identifier).trim(),
+          Product: item.product,
+          Qty: Number(item.qty || 1),
+          Price: unitPrice,
+          Date: dateStr,
+          Time: timeStr
+        };
+      });
 
       await api('Purchases', {
         method: 'POST',
@@ -475,7 +509,7 @@
           const paid = payments
             .filter(p => p.PayerType === 'Student' && String(p.Identifier) === adNo)
             .reduce((sum, p) => sum + Number(p.Amount || 0), 0);
-          const balance = due - paid;
+          const balance = paid - due;
           if (balance !== 0) {
             data.push({ slNo: slNo++, adNo: s.AdNo, name: s.Name, balance });
           }
@@ -503,7 +537,7 @@
           const paid = payments
             .filter(p => p.PayerType === 'Union' && String(p.Identifier).trim() === name)
             .reduce((sum, p) => sum + Number(p.Amount || 0), 0);
-          const balance = due - paid;
+          const balance = paid - due;
           if (balance !== 0) {
             data.push({ slNo: slNo++, name, balance });
           }
@@ -548,24 +582,38 @@
     },
 
     async bulkImportData(type, rows) {
-      if (type === 'Stock') {
-        const inserts = rows.map((r, i) => ({
-          ID: r[0] || ('STK_' + Date.now() + '_' + i),
-          Product: r[1],
-          Qty: Number(r[2] || 0),
-          Price: Number(r[3] || 0)
-        })).filter(x => x.Product);
+      const validRows = rows.filter(r => r && r.length >= 2 && r[0] && String(r[0]).trim());
+      if (type === 'stock' || type === 'Stock') {
+        const inserts = validRows.map((r, i) => ({
+          ID: 'STK_' + Date.now() + '_' + i,
+          Product: String(r[0]).trim(),
+          Qty: Number(r[1]) || 0,
+          Price: Number(r[2]) || 0
+        }));
         await api('Stock', { method: 'POST', body: JSON.stringify(inserts) });
-      } else if (type === 'Students') {
-        const inserts = rows.map(r => ({
-          AdNo: String(r[0]),
-          Name: r[1],
-          Class: r[2],
-          PhotoUrl: r[3] || ''
+      } else if (type === 'students' || type === 'Students') {
+        const inserts = validRows.map(r => ({
+          AdNo: String(r[0]).trim(),
+          Name: String(r[1] || '').trim(),
+          Class: String(r[2] || '').trim(),
+          PhotoUrl: String(r[3] || '').trim()
         })).filter(x => x.AdNo && x.Name);
         await api('Students', { method: 'POST', body: JSON.stringify(inserts) });
+      } else if (type === 'payments') {
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toLocaleTimeString();
+        const inserts = validRows.map((r, i) => ({
+          ID: 'PAY_' + Date.now() + '_' + i,
+          PayerType: 'Student',
+          Identifier: String(r[0]).trim(),
+          Amount: Number(r[1]) || 0,
+          Date: dateStr,
+          Time: timeStr
+        })).filter(x => x.Identifier && x.Amount > 0);
+        await api('payments', { method: 'POST', body: JSON.stringify(inserts) });
       }
-      return { success: true, message: 'Data imported successfully.' };
+      return { success: true, message: `Imported ${type} data successfully.` };
     }
   };
 
