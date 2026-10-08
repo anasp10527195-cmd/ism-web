@@ -6093,6 +6093,7 @@ document.addEventListener('click', function(e) {
 
 
 
+
 <!-- ISM UI Patches v4: dialog positions, top toasts, admin settings, union delete, class delete/edit, financial status fix, balance color/sign rules, market history -->
 <style id="ism-ui-patches-css">
 /* ── Confirm dialogs: full-screen centered dark backdrop ── */
@@ -6158,6 +6159,175 @@ document.addEventListener('click', function(e) {
 /* ── Modals z-index ── */
 #modal-admin-settings { z-index: 450; }
 #modal-class-batch-edit { z-index: 440; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AESTHETIC ANIMATION SUITE (Apple / Linear Inspired)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Full Page / Screen Enter Animations ── */
+.view-transition,
+.ism-page-enter {
+  animation: ismPageEnter 0.48s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  will-change: transform, opacity, filter;
+}
+
+@keyframes ismPageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(22px) scale(0.985);
+    filter: blur(5px);
+  }
+  60% {
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* ── Tab & Sub-tab Content Transitions ── */
+.ism-tab-animate {
+  animation: ismTabSlide 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  will-change: transform, opacity;
+}
+
+@keyframes ismTabSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Staggered Children Entrance ── */
+.ism-stagger-1 { animation: ismChildFade 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.04s both !important; }
+.ism-stagger-2 { animation: ismChildFade 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.09s both !important; }
+.ism-stagger-3 { animation: ismChildFade 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.14s both !important; }
+.ism-stagger-4 { animation: ismChildFade 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.19s both !important; }
+.ism-stagger-5 { animation: ismChildFade 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.24s both !important; }
+
+@keyframes ismChildFade {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Table Row Cascade Slide-In ── */
+.ism-row-animate {
+  animation: ismRowCascade 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes ismRowCascade {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Interactive Card Elevations & Polish ── */
+.glass-card,
+.portal-hero,
+.quick-option {
+  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.26s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.26s ease !important;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 50px -12px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ── Button Tactile Interactions & Shimmer ── */
+button {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.18s ease,
+              opacity 0.18s ease !important;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1.5px);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.96) translateY(0) !important;
+}
+
+/* Accent Button Glowing Shadows on Hover */
+button.bg-teal-600:hover,
+button.bg-teal-700:hover,
+button.bg-teal-800:hover {
+  box-shadow: 0 10px 25px -4px rgba(13, 148, 136, 0.45) !important;
+}
+
+button.bg-rose-600:hover,
+button.bg-rose-700:hover {
+  box-shadow: 0 10px 25px -4px rgba(225, 29, 72, 0.45) !important;
+}
+
+button.bg-slate-800:hover,
+button.bg-slate-900:hover {
+  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.45) !important;
+}
+
+/* ── Input Focus Smooth Expansion ── */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  transition: border-color 0.22s ease,
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.18), 0 6px 16px -4px rgba(13, 148, 136, 0.12) !important;
+  border-color: #0d9488 !important;
+}
+
+/* ── Live Stock & Status Badges Pulsing Glow ── */
+.portal-chip,
+.class-filter.active-filter {
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.class-filter.active-filter {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3) !important;
+}
+
+/* ── Header Initial Load Intro Animation ── */
+header {
+  animation: ismHeaderIntro 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes ismHeaderIntro {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>
 
 <!-- Top notification container -->
@@ -6916,7 +7086,20 @@ function injectHistoryTab() {
       });
 
       var activeTab = document.getElementById('admin-tab-' + tab);
-      if (activeTab) activeTab.classList.remove('hidden');
+      if (activeTab) {
+        activeTab.classList.remove('hidden');
+        activeTab.classList.remove('ism-tab-animate');
+        void activeTab.offsetWidth;
+        activeTab.classList.add('ism-tab-animate');
+
+        // Stagger cards in tab
+        var cards = activeTab.querySelectorAll('.glass-card, .section-title-row');
+        cards.forEach(function(c, i) {
+          c.classList.remove('ism-stagger-1', 'ism-stagger-2', 'ism-stagger-3', 'ism-stagger-4');
+          void c.offsetWidth;
+          c.classList.add('ism-stagger-' + Math.min(i + 1, 4));
+        });
+      }
       var activeBtn = document.getElementById('tab-btn-' + tab);
       if (activeBtn) {
         activeBtn.classList.add('bg-teal-600', 'text-white');
@@ -7027,7 +7210,7 @@ function renderMarketHistory(res) {
       : `<button onclick="cancelHistoryPayment('${t.id}')" title="Delete payment" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold border border-rose-200 transition"><i class="fa-solid fa-trash mr-1"></i>Delete</button>`;
 
     return `
-      <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+      <tr class="border-b border-slate-100 hover:bg-slate-50 transition ism-row-animate" style="animation-delay:${idx * 0.025}s">
         <td class="p-3 text-slate-500">${idx + 1}</td>
         <td class="p-3 font-medium text-slate-700">${t.date} <span class="text-xs text-slate-400 block">${t.time || ''}</span></td>
         <td class="p-3">${badge}</td>
@@ -7116,12 +7299,91 @@ window.exportHistoryPDF = function() {
   doc.save('Market_Transaction_History.pdf');
 };
 
+// ── Page & Screen Transitions Hook ──
+(function() {
+  var origShowView = window.showView;
+  if (origShowView) {
+    window.showView = function(viewId) {
+      origShowView(viewId);
+      var targetEl = document.getElementById(viewId);
+      if (!targetEl) return;
+
+      // Trigger full page enter animation
+      targetEl.classList.remove('ism-page-enter');
+      void targetEl.offsetWidth;
+      targetEl.classList.add('ism-page-enter');
+
+      // Smooth scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Stagger child cards inside the entered view
+      var cards = targetEl.querySelectorAll('.portal-hero, .glass-card, .quick-option, .section-title-row');
+      cards.forEach(function(c, i) {
+        c.classList.remove('ism-stagger-1', 'ism-stagger-2', 'ism-stagger-3', 'ism-stagger-4', 'ism-stagger-5');
+        void c.offsetWidth;
+        c.classList.add('ism-stagger-' + Math.min(i + 1, 5));
+      });
+    };
+  }
+
+  // Smooth Ledger sub-tab switching
+  var origSwitchLedgerSub = window.switchLedgerSub;
+  if (origSwitchLedgerSub) {
+    window.switchLedgerSub = function(sub) {
+      origSwitchLedgerSub(sub);
+      var subEl = document.getElementById('ledger-sub-' + sub);
+      if (subEl) {
+        subEl.classList.remove('ism-tab-animate');
+        void subEl.offsetWidth;
+        subEl.classList.add('ism-tab-animate');
+      }
+    };
+  }
+
+  // Smooth Ledger detail result animation
+  var origRenderStudent = window.renderStudentLedgerResult;
+  if (origRenderStudent) {
+    window.renderStudentLedgerResult = function(res) {
+      origRenderStudent(res);
+      var div = document.getElementById('student-ledger-result');
+      if (div) {
+        div.classList.remove('ism-tab-animate');
+        void div.offsetWidth;
+        div.classList.add('ism-tab-animate');
+      }
+    };
+  }
+
+  var origRenderUnion = window.renderUnionLedgerResult;
+  if (origRenderUnion) {
+    window.renderUnionLedgerResult = function(res) {
+      origRenderUnion(res);
+      var div = document.getElementById('union-ledger-result');
+      if (div) {
+        div.classList.remove('ism-tab-animate');
+        void div.offsetWidth;
+        div.classList.add('ism-tab-animate');
+      }
+    };
+  }
+})();
+
 // ── Initializations ──
 (function() {
   function initAll() {
     injectAddStudentForm();
     injectHistoryTab();
     updateClassActionsBar();
+
+    // Trigger initial landing page animation
+    var landing = document.getElementById('view-landing');
+    if (landing && !landing.classList.contains('hidden')) {
+      landing.classList.add('ism-page-enter');
+      var cards = landing.querySelectorAll('.glass-card, .grid > div');
+      cards.forEach(function(c, i) {
+        c.classList.add('ism-stagger-' + Math.min(i + 1, 4));
+      });
+    }
   }
 
   if (document.readyState === 'loading') {
