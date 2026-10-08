@@ -457,6 +457,145 @@
       return { success: true, message: 'Student deleted successfully.' };
     },
 
+    async deleteUnion(name) {
+      const cleanName = String(name || '').trim();
+      if (!cleanName) throw new Error('Union name is required.');
+      await api(`unions?Name=eq.${encodeURIComponent(cleanName)}`, { method: 'DELETE' });
+      return { success: true, message: `Union "${cleanName}" deleted successfully.` };
+    },
+
+    async deleteClass(className) {
+      const cleanClass = String(className || '').trim();
+      if (!cleanClass) throw new Error('Class name is required.');
+      const students = await api(`Students?Class=eq.${encodeURIComponent(cleanClass)}`) || [];
+      if (students.length > 0) {
+        try {
+          const deletedInserts = students.map(s => ({
+            AdNo: s.AdNo,
+            Name: s.Name,
+            DeletedAt: new Date().toISOString()
+          }));
+          await api('Deleted students', { method: 'POST', body: JSON.stringify(deletedInserts) });
+        } catch (_) {}
+        await api(`Students?Class=eq.${encodeURIComponent(cleanClass)}`, { method: 'DELETE' });
+      }
+      return { success: true, message: `All ${students.length} students in Class ${cleanClass} deleted successfully.` };
+    },
+
+    async batchUpdateClassStudents(updates) {
+      if (!Array.isArray(updates) || updates.length === 0) return { success: true, message: 'No updates to save.' };
+      for (const u of updates) {
+        if (!u.adNo) continue;
+        await api(`Students?AdNo=eq.${encodeURIComponent(u.adNo)}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            Name: String(u.name || '').trim(),
+            Class: String(u.className || '').trim()
+          })
+        });
+      }
+      return { success: true, message: `Updated ${updates.length} students successfully.` };
+    },
+
+    async moveClassStudents(oldClass, newClass) {
+      const cleanOld = String(oldClass || '').trim();
+      const cleanNew = String(newClass || '').trim();
+      if (!cleanOld || !cleanNew) throw new Error('Both old and new class names are required.');
+      await api(`Students?Class=eq.${encodeURIComponent(cleanOld)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ Class: cleanNew })
+      });
+      return { success: true, message: `Moved all students from Class ${cleanOld} to Class ${cleanNew}.` };
+    },
+
+    async getMarketHistory(from, to, type, search) {
+      const purchases = await api('Purchases?select=*&order=Date.desc,Time.desc') || [];
+      const payments  = await api('payments?select=*&order=Date.desc,Time.desc')  || [];
+      const students  = await api('Students?select=AdNo,Name,Class') || [];
+
+      const stuMap = {};
+      students.forEach(s => { stuMap[String(s.AdNo)] = s; });
+
+      let list = [];
+
+      if (type !== 'Payment') {
+        purchases.forEach(p => {
+          const stu = stuMap[String(p.Identifier)];
+          const displayName = stu ? `${stu.Name} (${p.Identifier})` : String(p.Identifier);
+          const qty = Number(p.Qty || 1);
+          const price = Number(p.Price || 0);
+          list.push({
+            id: p.ID,
+            kind: 'Purchase',
+            buyerType: p.BuyerType || 'Student',
+            identifier: String(p.Identifier),
+            displayName: displayName,
+            product: p.Product || 'Item',
+            qty: qty,
+            price: price,
+            amount: price * qty,
+            date: p.Date || '',
+            time: p.Time || ''
+          });
+        });
+      }
+
+      if (type !== 'Purchase') {
+        payments.forEach(pay => {
+          const stu = stuMap[String(pay.Identifier)];
+          const displayName = stu ? `${stu.Name} (${pay.Identifier})` : String(pay.Identifier);
+          const amt = Number(pay.Amount || 0);
+          list.push({
+            id: pay.ID,
+            kind: 'Payment',
+            buyerType: pay.PayerType || 'Student',
+            identifier: String(pay.Identifier),
+            displayName: displayName,
+            product: 'Payment received',
+            qty: 1,
+            price: amt,
+            amount: amt,
+            date: pay.Date || '',
+            time: pay.Time || ''
+          });
+        });
+      }
+
+      list.sort((a, b) => {
+        const da = `${a.date} ${a.time}`;
+        const db = `${b.date} ${b.time}`;
+        return db.localeCompare(da);
+      });
+
+      if (from) {
+        list = list.filter(t => !t.date || t.date >= from);
+      }
+      if (to) {
+        list = list.filter(t => !t.date || t.date <= to);
+      }
+
+      if (search) {
+        const q = String(search).toLowerCase().trim();
+        list = list.filter(t =>
+          String(t.identifier).toLowerCase().includes(q) ||
+          String(t.displayName).toLowerCase().includes(q) ||
+          String(t.product).toLowerCase().includes(q)
+        );
+      }
+
+      const totalPurchases = list.filter(t => t.kind === 'Purchase').reduce((s, t) => s + t.amount, 0);
+      const totalPayments  = list.filter(t => t.kind === 'Payment').reduce((s, t) => s + t.amount, 0);
+      const balance = totalPayments - totalPurchases;
+
+      return {
+        success: true,
+        transactions: list,
+        totalPurchases,
+        totalPayments,
+        balance
+      };
+    },
+
     async addExpenses(expenses) {
       const rows = expenses.map(e => ({
         ID: 'EXP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
@@ -556,22 +695,24 @@
       const fromDate = from || '2000-01-01';
       const toDate   = to   || '2099-12-31';
 
-      const filteredPurchases = purchases.filter(p => !p.Date || (p.Date >= fromDate && p.Date <= toDate));
-      const filteredPayments  = payments.filter(p  => !p.Date || (p.Date >= fromDate && p.Date <= toDate));
+      // Overall All-Time totals of the market
+      const allPurchasedTotal = purchases.reduce((s, p) => s + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
+      const allPaidTotal      = payments.reduce((s,  p) => s + Number(p.Amount || 0), 0);
+      const overallBalance    = allPaidTotal - allPurchasedTotal;
 
-      const totalPurchasedAmount = filteredPurchases.reduce((s, p) => s + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
-      const totalPaidAmount      = filteredPayments.reduce((s,  p) => s + Number(p.Amount || 0), 0);
-      const balance              = totalPurchasedAmount - totalPaidAmount;
+      // Filtered by date range for Income
+      const filteredPurchases = purchases.filter(p => !p.Date || (p.Date >= fromDate && p.Date <= toDate));
+      const periodIncome      = filteredPurchases.reduce((s, p) => s + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
 
       return {
         success: true,
         title: 'FINANCIAL STATUS SUMMARY REPORT',
         fromDate: from,
         toDate: to,
-        income: totalPurchasedAmount,
-        totalPurchasedAmount,
-        totalPaidAmount,
-        balance,
+        income: periodIncome,
+        totalPurchasedAmount: allPurchasedTotal,
+        totalPaidAmount: allPaidTotal,
+        balance: overallBalance,
         allExpenses: expenses.map(e => ({
           id: e.ID,
           description: e.Description,

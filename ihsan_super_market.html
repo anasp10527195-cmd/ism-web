@@ -2299,6 +2299,145 @@ input:where([type='button'], [type='reset'], [type='submit']),
       return { success: true, message: 'Student deleted successfully.' };
     },
 
+    async deleteUnion(name) {
+      const cleanName = String(name || '').trim();
+      if (!cleanName) throw new Error('Union name is required.');
+      await api(`unions?Name=eq.${encodeURIComponent(cleanName)}`, { method: 'DELETE' });
+      return { success: true, message: `Union "${cleanName}" deleted successfully.` };
+    },
+
+    async deleteClass(className) {
+      const cleanClass = String(className || '').trim();
+      if (!cleanClass) throw new Error('Class name is required.');
+      const students = await api(`Students?Class=eq.${encodeURIComponent(cleanClass)}`) || [];
+      if (students.length > 0) {
+        try {
+          const deletedInserts = students.map(s => ({
+            AdNo: s.AdNo,
+            Name: s.Name,
+            DeletedAt: new Date().toISOString()
+          }));
+          await api('Deleted students', { method: 'POST', body: JSON.stringify(deletedInserts) });
+        } catch (_) {}
+        await api(`Students?Class=eq.${encodeURIComponent(cleanClass)}`, { method: 'DELETE' });
+      }
+      return { success: true, message: `All ${students.length} students in Class ${cleanClass} deleted successfully.` };
+    },
+
+    async batchUpdateClassStudents(updates) {
+      if (!Array.isArray(updates) || updates.length === 0) return { success: true, message: 'No updates to save.' };
+      for (const u of updates) {
+        if (!u.adNo) continue;
+        await api(`Students?AdNo=eq.${encodeURIComponent(u.adNo)}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            Name: String(u.name || '').trim(),
+            Class: String(u.className || '').trim()
+          })
+        });
+      }
+      return { success: true, message: `Updated ${updates.length} students successfully.` };
+    },
+
+    async moveClassStudents(oldClass, newClass) {
+      const cleanOld = String(oldClass || '').trim();
+      const cleanNew = String(newClass || '').trim();
+      if (!cleanOld || !cleanNew) throw new Error('Both old and new class names are required.');
+      await api(`Students?Class=eq.${encodeURIComponent(cleanOld)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ Class: cleanNew })
+      });
+      return { success: true, message: `Moved all students from Class ${cleanOld} to Class ${cleanNew}.` };
+    },
+
+    async getMarketHistory(from, to, type, search) {
+      const purchases = await api('Purchases?select=*&order=Date.desc,Time.desc') || [];
+      const payments  = await api('payments?select=*&order=Date.desc,Time.desc')  || [];
+      const students  = await api('Students?select=AdNo,Name,Class') || [];
+
+      const stuMap = {};
+      students.forEach(s => { stuMap[String(s.AdNo)] = s; });
+
+      let list = [];
+
+      if (type !== 'Payment') {
+        purchases.forEach(p => {
+          const stu = stuMap[String(p.Identifier)];
+          const displayName = stu ? `${stu.Name} (${p.Identifier})` : String(p.Identifier);
+          const qty = Number(p.Qty || 1);
+          const price = Number(p.Price || 0);
+          list.push({
+            id: p.ID,
+            kind: 'Purchase',
+            buyerType: p.BuyerType || 'Student',
+            identifier: String(p.Identifier),
+            displayName: displayName,
+            product: p.Product || 'Item',
+            qty: qty,
+            price: price,
+            amount: price * qty,
+            date: p.Date || '',
+            time: p.Time || ''
+          });
+        });
+      }
+
+      if (type !== 'Purchase') {
+        payments.forEach(pay => {
+          const stu = stuMap[String(pay.Identifier)];
+          const displayName = stu ? `${stu.Name} (${pay.Identifier})` : String(pay.Identifier);
+          const amt = Number(pay.Amount || 0);
+          list.push({
+            id: pay.ID,
+            kind: 'Payment',
+            buyerType: pay.PayerType || 'Student',
+            identifier: String(pay.Identifier),
+            displayName: displayName,
+            product: 'Payment received',
+            qty: 1,
+            price: amt,
+            amount: amt,
+            date: pay.Date || '',
+            time: pay.Time || ''
+          });
+        });
+      }
+
+      list.sort((a, b) => {
+        const da = `${a.date} ${a.time}`;
+        const db = `${b.date} ${b.time}`;
+        return db.localeCompare(da);
+      });
+
+      if (from) {
+        list = list.filter(t => !t.date || t.date >= from);
+      }
+      if (to) {
+        list = list.filter(t => !t.date || t.date <= to);
+      }
+
+      if (search) {
+        const q = String(search).toLowerCase().trim();
+        list = list.filter(t =>
+          String(t.identifier).toLowerCase().includes(q) ||
+          String(t.displayName).toLowerCase().includes(q) ||
+          String(t.product).toLowerCase().includes(q)
+        );
+      }
+
+      const totalPurchases = list.filter(t => t.kind === 'Purchase').reduce((s, t) => s + t.amount, 0);
+      const totalPayments  = list.filter(t => t.kind === 'Payment').reduce((s, t) => s + t.amount, 0);
+      const balance = totalPayments - totalPurchases;
+
+      return {
+        success: true,
+        transactions: list,
+        totalPurchases,
+        totalPayments,
+        balance
+      };
+    },
+
     async addExpenses(expenses) {
       const rows = expenses.map(e => ({
         ID: 'EXP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
@@ -2398,22 +2537,24 @@ input:where([type='button'], [type='reset'], [type='submit']),
       const fromDate = from || '2000-01-01';
       const toDate   = to   || '2099-12-31';
 
-      const filteredPurchases = purchases.filter(p => !p.Date || (p.Date >= fromDate && p.Date <= toDate));
-      const filteredPayments  = payments.filter(p  => !p.Date || (p.Date >= fromDate && p.Date <= toDate));
+      // Overall All-Time totals of the market
+      const allPurchasedTotal = purchases.reduce((s, p) => s + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
+      const allPaidTotal      = payments.reduce((s,  p) => s + Number(p.Amount || 0), 0);
+      const overallBalance    = allPaidTotal - allPurchasedTotal;
 
-      const totalPurchasedAmount = filteredPurchases.reduce((s, p) => s + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
-      const totalPaidAmount      = filteredPayments.reduce((s,  p) => s + Number(p.Amount || 0), 0);
-      const balance              = totalPurchasedAmount - totalPaidAmount;
+      // Filtered by date range for Income
+      const filteredPurchases = purchases.filter(p => !p.Date || (p.Date >= fromDate && p.Date <= toDate));
+      const periodIncome      = filteredPurchases.reduce((s, p) => s + (Number(p.Price || 0) * Number(p.Qty || 1)), 0);
 
       return {
         success: true,
         title: 'FINANCIAL STATUS SUMMARY REPORT',
         fromDate: from,
         toDate: to,
-        income: totalPurchasedAmount,
-        totalPurchasedAmount,
-        totalPaidAmount,
-        balance,
+        income: periodIncome,
+        totalPurchasedAmount: allPurchasedTotal,
+        totalPaidAmount: allPaidTotal,
+        balance: overallBalance,
         allExpenses: expenses.map(e => ({
           id: e.ID,
           description: e.Description,
@@ -5951,7 +6092,8 @@ document.addEventListener('click', function(e) {
 
 
 
-<!-- ISM UI Patches v3: dialog positions, top toasts, admin settings -->
+
+<!-- ISM UI Patches v4: dialog positions, top toasts, admin settings, union delete, class delete/edit, financial status fix, balance color/sign rules, market history -->
 <style id="ism-ui-patches-css">
 /* ── Confirm dialogs: full-screen centered dark backdrop ── */
 #app-dialog.app-dialog-center {
@@ -6013,8 +6155,9 @@ document.addEventListener('click', function(e) {
 .ism-n-title { font-size: 13px; font-weight: 900; line-height: 1.3; }
 .ism-n-msg   { font-size: 12px; font-weight: 500; opacity: 0.92; margin-top: 2px; line-height: 1.4; }
 
-/* ── Admin Settings Modal ── */
+/* ── Modals z-index ── */
 #modal-admin-settings { z-index: 450; }
+#modal-class-batch-edit { z-index: 440; }
 </style>
 
 <!-- Top notification container -->
@@ -6061,41 +6204,79 @@ document.addEventListener('click', function(e) {
   </div>
 </div>
 
+<!-- Class Batch Edit Modal -->
+<div id="modal-class-batch-edit" class="hidden fixed inset-0 flex items-center justify-center p-4" style="z-index:440;background:rgba(8,14,34,0.88);backdrop-filter:blur(12px)">
+  <div style="background:#fff;border-radius:22px;padding:1.75rem;width:100%;max-width:700px;max-height:88vh;display:flex;flex-direction:column;position:relative;box-shadow:0 40px 100px rgba(0,0,0,0.55)">
+    <button onclick="document.getElementById('modal-class-batch-edit').classList.add('hidden')" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer;padding:4px" onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#94a3b8'">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
+      <div style="width:44px;height:44px;border-radius:13px;background:#f0fdf9;display:flex;align-items:center;justify-content:center;flex:none">
+        <i class="fa-solid fa-users-gear" style="color:#0d9488;font-size:1.15rem"></i>
+      </div>
+      <div>
+        <div style="font-size:1.15rem;font-weight:900;color:#0f172a">Class Students Management</div>
+        <div style="font-size:0.75rem;color:#64748b;margin-top:1px" id="class-batch-subtitle">Edit all students in selected class</div>
+      </div>
+    </div>
+
+    <!-- Quick action: Move whole class -->
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:180px">
+        <span style="font-size:12px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.04em">Move entire class to:</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="batch-move-new-class" type="text" placeholder="e.g. 9" style="width:90px;padding:8px 12px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:13px;font-weight:700">
+        <button onclick="executeMoveClassStudents(this)" style="padding:8px 14px;border-radius:10px;background:#0d9488;color:#fff;font-weight:800;font-size:13px;border:none;cursor:pointer">
+          <i class="fa-solid fa-arrow-right-arrow-left" style="margin-right:6px"></i>Move All
+        </button>
+      </div>
+    </div>
+
+    <!-- Student rows editable list -->
+    <div style="flex:1;overflow-y:auto;border:1px solid #e2e8f0;border-radius:14px;padding:8px;margin-bottom:14px;background:#fafafa">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="border-bottom:1.5px solid #e2e8f0;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase">
+            <th style="padding:8px">Ad.No</th>
+            <th style="padding:8px">Student Name</th>
+            <th style="padding:8px;width:110px">Class</th>
+          </tr>
+        </thead>
+        <tbody id="class-batch-table-body">
+          <!-- Populated dynamically -->
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button onclick="document.getElementById('modal-class-batch-edit').classList.add('hidden')" style="padding:10px 18px;border-radius:12px;background:#f1f5f9;color:#475569;font-weight:700;font-size:14px;border:none;cursor:pointer">Cancel</button>
+      <button id="class-batch-save-btn" onclick="saveClassBatchStudents(this)" style="padding:10px 22px;border-radius:12px;background:linear-gradient(135deg,#0d9488,#0f766e);color:white;font-weight:800;font-size:14px;border:none;cursor:pointer">
+        <i class="fa-solid fa-check" style="margin-right:6px"></i>Save All Changes
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 // =======================================================
-// ISM UI Patches v3
+// ISM UI Patches v4
 // =======================================================
 
-// 0. Fix Financial Status Summary: default date range should be all-time, not just today
-(function() {
-  function fixFinancialDates() {
-    var fromEl = document.getElementById('financial-report-from-date');
-    var toEl   = document.getElementById('financial-report-to-date');
-    if (fromEl && fromEl.value === toEl.value) {
-      // Set from date to 2000-01-01 to show all historical purchases
-      fromEl.value = '2000-01-01';
-    }
-  }
-  // Override loadFinancialDateSummary to also call getReportData with wider range
-  var origLoadFin = window.loadFinancialDateSummary;
-  if (origLoadFin) {
-    window.loadFinancialDateSummary = function() {
-      var fromEl = document.getElementById('financial-report-from-date');
-      if (fromEl && !fromEl._ismFixed) {
-        fromEl._ismFixed = true;
-        var today = new Date().toISOString().split('T')[0];
-        if (fromEl.value === today) { fromEl.value = '2000-01-01'; }
-      }
-      origLoadFin.apply(this, arguments);
-    };
-  }
-  setTimeout(function() {
-    fixFinancialDates();
-    if (typeof loadFinancialDateSummary === 'function') loadFinancialDateSummary();
-  }, 1200);
-})();
+// ── Universal Balance Helper ──
+// Rule:
+// • If purchased > paid (i.e. amount < 0): minus sign (-₹X.XX) and RED color (#dc2626)
+// • If paid >= purchased (i.e. amount >= 0): NO plus sign (₹X.XX) and GREEN color (#059669)
+window.ismFormatBalance = function(amount) {
+  const n = Number(amount || 0);
+  const isMinus = n < -0.000001;
+  const colorClass = isMinus ? 'text-rose-600' : 'text-emerald-600';
+  const bgClass    = isMinus ? 'bg-rose-50'    : 'bg-emerald-50';
+  const text       = isMinus ? `-₹${Math.abs(n).toFixed(2)}` : `₹${n.toFixed(2)}`;
+  return { n, isMinus, colorClass, bgClass, text };
+};
 
-// 1. Top notification helper
+// ── Top notification helper ──
 function ismShowNotif(title, msg, type, ms) {
   let c = document.getElementById('ism-top-notif');
   if (!c) {
@@ -6123,18 +6304,15 @@ function ismShowNotif(title, msg, type, ms) {
   }, dur);
 }
 
-// 2. Override showToast → top notifications
+// ── Override showToast → top notifications ──
 (function() {
-  var orig = window.showToast;
   window.showToast = function(message, type) {
     var t = (type === 'error' || type === 'danger') ? 'danger' : (type === 'success' ? 'success' : 'info');
     ismShowNotif('', message, t, 3200);
   };
 })();
 
-// 3. Override showAppDialog:
-//    • message  → top notification (auto-dismiss, no button)
-//    • confirm  → centered full-screen modal with dark backdrop (inline styles = highest priority)
+// ── Override showAppDialog: center confirm with dark backdrop, top auto-dismiss for message ──
 (function() {
   var orig = window.showAppDialog;
   if (!orig) return;
@@ -6146,27 +6324,17 @@ function ismShowNotif(title, msg, type, ms) {
       ismShowNotif(options.title || '', options.message || '', t, ms);
       return Promise.resolve(true);
     }
-    // confirm / prompt: use original, then FORCE center with inline styles
     var result = orig(options);
     var modal = document.getElementById('app-dialog');
     if (modal) {
       modal.classList.remove('app-dialog-top');
       modal.classList.add('app-dialog-center');
-      // Inline styles override ALL CSS (highest specificity possible)
       modal.style.cssText = [
-        'position:fixed',
-        'inset:0',
-        'z-index:300',
-        'display:flex',
-        'align-items:center',
-        'justify-content:center',
-        'padding:1rem',
-        'background:rgba(8,14,34,0.88)',
-        'backdrop-filter:blur(12px)',
-        '-webkit-backdrop-filter:blur(12px)',
-        'pointer-events:auto'
+        'position:fixed', 'inset:0', 'z-index:300', 'display:flex',
+        'align-items:center', 'justify-content:center', 'padding:1rem',
+        'background:rgba(8,14,34,0.88)', 'backdrop-filter:blur(12px)',
+        '-webkit-backdrop-filter:blur(12px)', 'pointer-events:auto'
       ].join(';');
-      // Style the inner card too
       var card = modal.querySelector('.app-dialog-card');
       if (card) {
         card.style.borderRadius = '20px';
@@ -6177,20 +6345,17 @@ function ismShowNotif(title, msg, type, ms) {
     return result;
   };
 
-  // Also override closeAppDialog to reset inline styles
   var origClose = window.closeAppDialog;
   if (origClose) {
     window.closeAppDialog = function() {
       var modal = document.getElementById('app-dialog');
-      if (modal) {
-        modal.style.cssText = '';
-      }
+      if (modal) modal.style.cssText = '';
       origClose.apply(this, arguments);
     };
   }
 })();
 
-// 4. Admin Settings functions
+// ── Admin Settings ──
 function openAdminSettings() {
   ['admin-set-cur','admin-set-usr','admin-set-pw1','admin-set-pw2'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.value = '';
@@ -6226,7 +6391,6 @@ async function saveAdminSettings(btn) {
       'Prefer': 'return=representation'
     };
 
-    // Verify current password
     var vRes = await fetch(URL + '/rest/v1/Admin?Password=eq.' + encodeURIComponent(cur), { headers: h });
     var admins = await vRes.json();
     if (!admins || admins.length === 0) {
@@ -6252,7 +6416,7 @@ async function saveAdminSettings(btn) {
   }
 }
 
-// 5. Add Settings button in header next to Sign Out, wire to admin login/logout
+// ── Admin Settings button in header ──
 (function() {
   function addSettingsBtn() {
     if (document.getElementById('admin-settings-btn')) return;
@@ -6272,7 +6436,6 @@ async function saveAdminSettings(btn) {
   addSettingsBtn();
   setTimeout(addSettingsBtn, 800);
 
-  // Patch showAdminDashboard to also reveal Settings button
   var origShowAdmin = window.showAdminDashboard;
   if (origShowAdmin) {
     window.showAdminDashboard = function() {
@@ -6282,7 +6445,6 @@ async function saveAdminSettings(btn) {
     };
   }
 
-  // Patch logout to hide Settings button
   var origLogout = window.logout;
   if (origLogout) {
     window.logout = function() {
@@ -6293,28 +6455,27 @@ async function saveAdminSettings(btn) {
   }
 })();
 
-// 6. Add Student form injection into the Students ledger tab
+// ── Add Student Form Injection ──
 function injectAddStudentForm() {
   var studentsSection = document.getElementById('ledger-sub-students');
   if (!studentsSection || document.getElementById('add-student-form-injected')) return;
-  var parts = [
-    '<div id="add-student-form-injected" class="glass-card rounded-2xl p-6 shadow-xl">',
-    '<h3 class="text-lg font-bold text-slate-900 mb-4"><i class="fa-solid fa-user-plus text-teal-600 mr-2"></i>Add New Student</h3>',
-    '<div class="grid grid-cols-2 gap-3 mb-3">',
-    '<div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Admission No *</label>',
-    '<input id="new-stu-adno" type="text" placeholder="e.g. 1053" class="w-full p-3 rounded-xl border border-slate-200 text-sm"></div>',
-    '<div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Class *</label>',
-    '<input id="new-stu-class" type="text" placeholder="e.g. 8" class="w-full p-3 rounded-xl border border-slate-200 text-sm"></div>',
-    '</div>',
-    '<div class="mb-3"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Full Name *</label>',
-    '<input id="new-stu-name" type="text" placeholder="Student full name" class="w-full p-3 rounded-xl border border-slate-200 text-sm"></div>',
-    '<div class="mb-4"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Photo URL (optional)</label>',
-    '<input id="new-stu-photo" type="text" placeholder="https://..." class="w-full p-3 rounded-xl border border-slate-200 text-sm"></div>',
-    '<button onclick="submitNewStudent(this)" class="px-6 py-3 bg-teal-600 text-white font-bold rounded-xl">',
-    '<i class="fa-solid fa-plus mr-2"></i>Add Student</button>',
-    '</div>'
-  ];
-  var formHTML = parts.join('');
+  var formHTML = `
+  <div id="add-student-form-injected" class="glass-card rounded-2xl p-6 shadow-xl mb-4">
+    <h3 class="text-lg font-bold text-slate-900 mb-4"><i class="fa-solid fa-user-plus text-teal-600 mr-2"></i>Add New Student</h3>
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Admission No *</label>
+      <input id="new-stu-adno" type="text" placeholder="e.g. 1053" class="w-full p-3 rounded-xl border border-slate-200 text-sm"></div>
+      <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Class *</label>
+      <input id="new-stu-class" type="text" placeholder="e.g. 8" class="w-full p-3 rounded-xl border border-slate-200 text-sm"></div>
+    </div>
+    <div class="mb-3"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Full Name *</label>
+    <input id="new-stu-name" type="text" placeholder="Student full name" class="w-full p-3 rounded-xl border border-slate-200 text-sm"></div>
+    <div class="mb-4"><label class="block text-xs font-bold uppercase text-slate-500 mb-1">Photo URL (optional)</label>
+    <input id="new-stu-photo" type="text" placeholder="https://..." class="w-full p-3 rounded-xl border border-slate-200 text-sm"></div>
+    <button onclick="submitNewStudent(this)" class="px-6 py-3 bg-teal-600 text-white font-bold rounded-xl transition hover:bg-teal-700">
+      <i class="fa-solid fa-plus mr-2"></i>Add Student
+    </button>
+  </div>`;
   studentsSection.insertAdjacentHTML('afterbegin', formHTML);
 }
 
@@ -6326,7 +6487,7 @@ async function submitNewStudent(btn) {
   if (!adNo || !name || !cls) { ismShowNotif('Error', 'Please fill Admission No, Name and Class.', 'danger'); return; }
   btn.disabled = true;
   var orig = btn.innerHTML;
-  btn.innerHTML = 'Saving...';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Saving...';
   google.script.run
     .withSuccessHandler(function(res) {
       btn.disabled = false; btn.innerHTML = orig;
@@ -6346,10 +6507,634 @@ async function submitNewStudent(btn) {
     .addSingleStudent(adNo, name, cls, photo);
 }
 
+// ── Delete Union Action ──
+window.deleteSelectedUnion = function(name) {
+  var unionName = String(name || '').trim();
+  if (!unionName) return;
+
+  appConfirm(
+    'Delete union "' + unionName + '"? Existing transaction history will remain intact, but the union will no longer appear in the active union list.',
+    {
+      title: 'Delete union',
+      okText: 'Yes, delete',
+      cancelText: 'Keep union',
+      type: 'danger'
+    }
+  ).then(function(confirmed) {
+    if (!confirmed) return;
+    google.script.run
+      .withSuccessHandler(function(res) {
+        ismShowNotif(res.success ? 'Union Deleted' : 'Error', res.message || 'Union deleted.', res.success ? 'success' : 'danger');
+        if (res.success) {
+          if (typeof loadUnionCache === 'function') loadUnionCache();
+          if (typeof backToUnionLedgerList === 'function') backToUnionLedgerList();
+        }
+      })
+      .withFailureHandler(function(err) {
+        ismShowNotif('Error', err.message || 'Unable to delete union.', 'danger');
+      })
+      .deleteUnion(unionName);
+  });
+};
+
+// ── Patch ledgerDetailHtml: Delete Union button + universal balance color/sign ──
 (function() {
-  function tryInject() { injectAddStudentForm(); setTimeout(injectAddStudentForm, 500); }
-  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', tryInject); }
-  else { tryInject(); }
+  var origLedgerDetailHtml = window.ledgerDetailHtml;
+  if (!origLedgerDetailHtml) return;
+
+  window.ledgerDetailHtml = function(res, type) {
+    var html = origLedgerDetailHtml(res, type);
+    var isStudent = type === 'Student';
+    var profile = isStudent ? res.student : res.union;
+
+    // 1. Add Delete Union button if Union
+    if (!isStudent && profile && profile.name) {
+      var unionDeleteBtn = `
+        <div class="flex flex-wrap gap-2 mt-3">
+          <button type="button" onclick="deleteSelectedUnion('${profile.name.replace(/'/g, "\\'")}')" class="px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-sm transition">
+            <i class="fa-solid fa-trash mr-1"></i>Delete Union
+          </button>
+        </div>`;
+      html = html.replace(/(<h4[^>]*>[\s\S]*?<\/h4>)/, '$1' + unionDeleteBtn);
+    }
+
+    // 2. Format Balance display with universal rule:
+    // If minus: -₹X.XX in red
+    // If not minus: ₹X.XX in green (no plus sign)
+    var fb = ismFormatBalance(res.balance);
+    var oldBalPattern = /<div class="p-3 bg-slate-100 rounded-xl font-bold">Balance:\s*[^<]*<\/div>/;
+    var newBalHtml = `<div class="p-3 ${fb.bgClass} rounded-xl font-bold ${fb.colorClass}">Balance: ${fb.text}</div>`;
+    html = html.replace(oldBalPattern, newBalHtml);
+
+    return html;
+  };
+})();
+
+// ── Patch Student Dashboard Balance Display ──
+(function() {
+  var origRenderStudentDashboard = window.renderStudentDashboard;
+  if (origRenderStudentDashboard) {
+    window.renderStudentDashboard = function(res) {
+      origRenderStudentDashboard(res);
+      var balanceEl = document.getElementById('st-balance');
+      if (balanceEl && res) {
+        var fb = ismFormatBalance(res.balance);
+        balanceEl.innerText = fb.text;
+        balanceEl.classList.remove('text-rose-600', 'text-emerald-600', 'text-slate-800');
+        balanceEl.classList.add(fb.colorClass);
+      }
+    };
+  }
+})();
+
+// ── Patch Reports: Format table row balances with proper sign and color ──
+(function() {
+  var origGen = window.generateReport;
+  if (origGen) {
+    window.generateReport = function(silent) {
+      origGen(silent);
+      // After report loads, patch any balance in the table
+      setTimeout(function() {
+        var out = document.getElementById('report-output');
+        if (!out) return;
+        // Financial Status Summary cards
+        var balStrong = out.querySelector('strong.text-2xl[class*="text-"]');
+        if (balStrong && window.currentReportData) {
+          var fb = ismFormatBalance(window.currentReportData.balance);
+          balStrong.textContent = fb.text;
+          balStrong.className = 'block text-2xl ' + fb.colorClass;
+        }
+      }, 500);
+    };
+  }
+})();
+
+// ── Class Management: Batch Edit & Delete Class ──
+var currentSelectedClassStudents = [];
+
+function updateClassActionsBar() {
+  var container = document.getElementById('student-class-filters');
+  if (!container) return;
+  var bar = document.getElementById('class-actions-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'class-actions-bar';
+    bar.className = 'hidden flex flex-wrap items-center justify-between gap-3 p-3 bg-teal-50 border border-teal-200 rounded-xl mt-3';
+    container.parentNode.insertBefore(bar, container.nextSibling);
+  }
+
+  if (!window.selectedLedgerClass) {
+    bar.classList.add('hidden');
+    return;
+  }
+
+  var studentsInClass = (window.globalStudentsCache || []).filter(function(s) {
+    return String(s.className || s.Class || '').trim() === String(window.selectedLedgerClass).trim();
+  });
+  currentSelectedClassStudents = studentsInClass;
+
+  bar.classList.remove('hidden');
+  bar.innerHTML = `
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-black uppercase text-teal-800 tracking-wider">Class ${window.selectedLedgerClass} Controls</span>
+      <span class="px-2.5 py-0.5 rounded-full bg-teal-200/70 text-teal-900 text-xs font-bold">${studentsInClass.length} Students</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button" onclick="openClassBatchEditModal()" class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-lg shadow-sm transition">
+        <i class="fa-solid fa-users-gear mr-1"></i> Edit All Students in Class
+      </button>
+      <button type="button" onclick="deleteEntireClassConfirm()" class="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow-sm transition">
+        <i class="fa-solid fa-trash-can mr-1"></i> Delete Class ${window.selectedLedgerClass}
+      </button>
+    </div>`;
+}
+
+// Hook into selectLedgerClass
+(function() {
+  var origSelectClass = window.selectLedgerClass;
+  if (origSelectClass) {
+    window.selectLedgerClass = function(cls, btn) {
+      origSelectClass(cls, btn);
+      setTimeout(updateClassActionsBar, 400);
+    };
+  }
+})();
+
+window.openClassBatchEditModal = function() {
+  var cls = window.selectedLedgerClass;
+  if (!cls) return ismShowNotif('Notice', 'Please select a class first.', 'info');
+
+  document.getElementById('class-batch-subtitle').textContent = `Class ${cls} — ${currentSelectedClassStudents.length} students`;
+  document.getElementById('batch-move-new-class').value = '';
+
+  var tbody = document.getElementById('class-batch-table-body');
+  if (currentSelectedClassStudents.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-slate-400">No students found in Class ' + cls + '.</td></tr>';
+  } else {
+    tbody.innerHTML = currentSelectedClassStudents.map(function(s, idx) {
+      return `
+        <tr style="border-bottom:1px solid #e2e8f0" data-adno="${s.adNo}">
+          <td style="padding:8px;font-weight:700;color:#334155">${s.adNo}</td>
+          <td style="padding:6px 8px">
+            <input type="text" class="batch-stu-name" value="${(s.name || '').replace(/"/g, '&quot;')}" style="width:100%;padding:6px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;font-weight:600">
+          </td>
+          <td style="padding:6px 8px">
+            <input type="text" class="batch-stu-class" value="${(s.className || s.Class || cls).replace(/"/g, '&quot;')}" style="width:100%;padding:6px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;font-weight:700">
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('modal-class-batch-edit').classList.remove('hidden');
+};
+
+window.executeMoveClassStudents = function(btn) {
+  var oldCls = window.selectedLedgerClass;
+  var newCls = (document.getElementById('batch-move-new-class').value || '').trim();
+  if (!newCls) return ismShowNotif('Error', 'Please enter the target class.', 'danger');
+  if (newCls === oldCls) return ismShowNotif('Notice', 'Target class is the same as current class.', 'info');
+
+  appConfirm(`Move all ${currentSelectedClassStudents.length} students from Class ${oldCls} to Class ${newCls}?`, {
+    title: 'Move Class Students',
+    okText: 'Yes, move all',
+    cancelText: 'Cancel',
+    type: 'warning'
+  }).then(function(confirmed) {
+    if (!confirmed) return;
+    btn.disabled = true;
+    var origText = btn.innerHTML;
+    btn.innerHTML = 'Moving...';
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.disabled = false; btn.innerHTML = origText;
+        ismShowNotif(res.success ? 'Success' : 'Error', res.message, res.success ? 'success' : 'danger');
+        if (res.success) {
+          document.getElementById('modal-class-batch-edit').classList.add('hidden');
+          if (typeof loadStudentLedgerList === 'function') loadStudentLedgerList();
+          setTimeout(updateClassActionsBar, 600);
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false; btn.innerHTML = origText;
+        ismShowNotif('Error', err.message || 'Unable to move students.', 'danger');
+      })
+      .moveClassStudents(oldCls, newCls);
+  });
+};
+
+window.saveClassBatchStudents = function(btn) {
+  var rows = document.querySelectorAll('#class-batch-table-body tr');
+  var updates = [];
+  rows.forEach(function(row) {
+    var adNo = row.getAttribute('data-adno');
+    if (!adNo) return;
+    var name = (row.querySelector('.batch-stu-name')?.value || '').trim();
+    var className = (row.querySelector('.batch-stu-class')?.value || '').trim();
+    updates.push({ adNo: adNo, name: name, className: className });
+  });
+
+  if (updates.length === 0) return ismShowNotif('Notice', 'No student rows to update.', 'info');
+
+  btn.disabled = true;
+  var origText = btn.innerHTML;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Saving...';
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.disabled = false; btn.innerHTML = origText;
+      ismShowNotif(res.success ? 'Success' : 'Error', res.message, res.success ? 'success' : 'danger');
+      if (res.success) {
+        document.getElementById('modal-class-batch-edit').classList.add('hidden');
+        if (typeof loadStudentLedgerList === 'function') loadStudentLedgerList();
+        setTimeout(updateClassActionsBar, 600);
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false; btn.innerHTML = origText;
+      ismShowNotif('Error', err.message || 'Unable to update students.', 'danger');
+    })
+    .batchUpdateClassStudents(updates);
+};
+
+window.deleteEntireClassConfirm = function() {
+  var cls = window.selectedLedgerClass;
+  if (!cls) return ismShowNotif('Notice', 'Please select a class first.', 'info');
+
+  appConfirm(
+    `Are you sure you want to delete ALL ${currentSelectedClassStudents.length} students in Class ${cls}? All students will be moved to Deleted Students. This cannot be undone.`,
+    {
+      title: 'Delete Entire Class ' + cls,
+      okText: 'Yes, delete whole class',
+      cancelText: 'Cancel',
+      type: 'danger'
+    }
+  ).then(function(confirmed) {
+    if (!confirmed) return;
+    google.script.run
+      .withSuccessHandler(function(res) {
+        ismShowNotif(res.success ? 'Class Deleted' : 'Error', res.message, res.success ? 'success' : 'danger');
+        if (res.success) {
+          if (typeof loadStudentLedgerList === 'function') loadStudentLedgerList();
+          setTimeout(updateClassActionsBar, 600);
+        }
+      })
+      .withFailureHandler(function(err) {
+        ismShowNotif('Error', err.message || 'Unable to delete class.', 'danger');
+      })
+      .deleteClass(cls);
+  });
+};
+
+// ── Market History Section ──
+function injectHistoryTab() {
+  if (document.getElementById('tab-btn-history')) return;
+
+  // 1. Add tab button
+  var reportBtn = document.getElementById('tab-btn-report');
+  if (reportBtn) {
+    var histBtn = document.createElement('button');
+    histBtn.id = 'tab-btn-history';
+    histBtn.onclick = function() { switchAdminTab('history'); };
+    histBtn.className = 'flex-1 py-3 font-bold rounded-xl text-slate-600 hover:bg-slate-100 transition';
+    histBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left mr-2"></i> History';
+    reportBtn.parentNode.appendChild(histBtn);
+  }
+
+  // 2. Add History Tab Content
+  var reportTab = document.getElementById('admin-tab-report');
+  if (reportTab && !document.getElementById('admin-tab-history')) {
+    var histTab = document.createElement('div');
+    histTab.id = 'admin-tab-history';
+    histTab.className = 'hidden space-y-6';
+    histTab.innerHTML = `
+      <div class="glass-card rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h3 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-clock-rotate-left text-teal-600 mr-2"></i> Market Transaction History</h3>
+            <p class="text-sm text-slate-500 mt-1">Live record of all purchases and payments conducted in the market with date filtering.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" class="refresh-mini" title="Refresh history" onclick="loadMarketHistory(this)">
+              <i class="fa-solid fa-rotate"></i>
+            </button>
+            <button type="button" onclick="exportHistoryPDF()" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition shadow-md text-sm">
+              <i class="fa-solid fa-file-pdf mr-2"></i>Download PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 pt-2">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">From Date</label>
+            <input type="date" id="hist-from-date" onchange="loadMarketHistory()" class="w-full p-2.5 rounded-xl border bg-white text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">To Date</label>
+            <input type="date" id="hist-to-date" onchange="loadMarketHistory()" class="w-full p-2.5 rounded-xl border bg-white text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Transaction Type</label>
+            <select id="hist-type-filter" onchange="loadMarketHistory()" class="w-full p-2.5 rounded-xl border bg-white text-sm">
+              <option value="All">All Transactions</option>
+              <option value="Purchase">Purchases Only</option>
+              <option value="Payment">Payments Only</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Search</label>
+            <input type="text" id="hist-search" oninput="loadMarketHistory()" placeholder="Search Ad.No, Name, Item..." class="w-full p-2.5 rounded-xl border bg-white text-sm">
+          </div>
+        </div>
+
+        <!-- Quick date filter pills -->
+        <div class="flex flex-wrap gap-2 pt-1">
+          <button type="button" onclick="setHistoryDatePreset('all')" class="px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">All Time</button>
+          <button type="button" onclick="setHistoryDatePreset('thisMonth')" class="px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">This Month</button>
+          <button type="button" onclick="setHistoryDatePreset('today')" class="px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">Today</button>
+        </div>
+      </div>
+
+      <!-- Summary metrics cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-5 glass-card rounded-2xl shadow-md border border-slate-100">
+          <span class="text-xs font-bold uppercase text-slate-500">Total Purchases</span>
+          <div id="hist-total-purchases" class="text-2xl font-black text-slate-900 mt-1">₹0.00</div>
+          <span id="hist-count-purchases" class="text-xs text-slate-400">0 records</span>
+        </div>
+        <div class="p-5 glass-card rounded-2xl shadow-md border border-slate-100">
+          <span class="text-xs font-bold uppercase text-slate-500">Total Payments</span>
+          <div id="hist-total-payments" class="text-2xl font-black text-emerald-600 mt-1">₹0.00</div>
+          <span id="hist-count-payments" class="text-xs text-slate-400">0 records</span>
+        </div>
+        <div class="p-5 glass-card rounded-2xl shadow-md border border-slate-100">
+          <span class="text-xs font-bold uppercase text-slate-500">Net Balance</span>
+          <div id="hist-total-balance" class="text-2xl font-black mt-1">₹0.00</div>
+          <span class="text-xs text-slate-400">Paid − Purchased</span>
+        </div>
+      </div>
+
+      <!-- History Table -->
+      <div class="glass-card rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-slate-100 text-xs uppercase text-slate-600 font-extrabold">
+              <tr>
+                <th class="p-3">Sl.No</th>
+                <th class="p-3">Date & Time</th>
+                <th class="p-3">Type</th>
+                <th class="p-3">Buyer / Payer</th>
+                <th class="p-3">Item / Description</th>
+                <th class="p-3 text-center">Qty</th>
+                <th class="p-3 text-right">Amount (₹)</th>
+                <th class="p-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="hist-table-body">
+              <tr><td colspan="8" class="p-6 text-center text-slate-400">Loading history...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    reportTab.parentNode.appendChild(histTab);
+  }
+}
+
+// ── Patch switchAdminTab to support history ──
+(function() {
+  var origSwitchAdminTab = window.switchAdminTab;
+  if (origSwitchAdminTab) {
+    window.switchAdminTab = function(tab) {
+      ['ledger','stock','bulk','report','history'].forEach(function(t) {
+        var el = document.getElementById('admin-tab-' + t);
+        if (el) el.classList.add('hidden');
+        var btn = document.getElementById('tab-btn-' + t);
+        if (btn) {
+          btn.classList.remove('bg-teal-600', 'text-white');
+          btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+        }
+      });
+
+      var activeTab = document.getElementById('admin-tab-' + tab);
+      if (activeTab) activeTab.classList.remove('hidden');
+      var activeBtn = document.getElementById('tab-btn-' + tab);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-teal-600', 'text-white');
+        activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+      }
+
+      if (tab === 'history') {
+        loadMarketHistory();
+      } else if (origSwitchAdminTab && tab !== 'history') {
+        origSwitchAdminTab(tab);
+      }
+    };
+  }
+})();
+
+var currentMarketHistoryData = null;
+
+window.setHistoryDatePreset = function(preset) {
+  var fromInput = document.getElementById('hist-from-date');
+  var toInput   = document.getElementById('hist-to-date');
+  var d = new Date();
+  var y = d.getFullYear();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var day = String(d.getDate()).padStart(2, '0');
+  var todayStr = `${y}-${m}-${day}`;
+
+  if (preset === 'all') {
+    fromInput.value = '';
+    toInput.value = '';
+  } else if (preset === 'today') {
+    fromInput.value = todayStr;
+    toInput.value = todayStr;
+  } else if (preset === 'thisMonth') {
+    fromInput.value = `${y}-${m}-01`;
+    toInput.value = todayStr;
+  }
+  loadMarketHistory();
+};
+
+window.loadMarketHistory = function(btn) {
+  var from = document.getElementById('hist-from-date')?.value || '';
+  var to   = document.getElementById('hist-to-date')?.value || '';
+  var type = document.getElementById('hist-type-filter')?.value || 'All';
+  var q    = document.getElementById('hist-search')?.value || '';
+
+  var tbody = document.getElementById('hist-table-body');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading history...</td></tr>';
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res || !res.success) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-rose-500 font-bold">Unable to load transactions.</td></tr>';
+        return;
+      }
+      currentMarketHistoryData = res;
+      renderMarketHistory(res);
+    })
+    .withFailureHandler(function(err) {
+      if (tbody) tbody.innerHTML = `<tr colspan="8" class="p-6 text-center text-rose-500 font-bold">${err?.message || 'Failed to load history.'}</td></tr>`;
+    })
+    .getMarketHistory(from, to, type, q);
+};
+
+function renderMarketHistory(res) {
+  var txs = res.transactions || [];
+
+  // Summary numbers
+  var purTotal = Number(res.totalPurchases || 0);
+  var payTotal = Number(res.totalPayments || 0);
+  var balVal   = Number(res.balance || 0);
+
+  var purCount = txs.filter(t => t.kind === 'Purchase').length;
+  var payCount = txs.filter(t => t.kind === 'Payment').length;
+
+  var pEl = document.getElementById('hist-total-purchases');
+  if (pEl) pEl.textContent = '₹' + purTotal.toFixed(2);
+  var pCnt = document.getElementById('hist-count-purchases');
+  if (pCnt) pCnt.textContent = purCount + ' purchases';
+
+  var payEl = document.getElementById('hist-total-payments');
+  if (payEl) payEl.textContent = '₹' + payTotal.toFixed(2);
+  var payCnt = document.getElementById('hist-count-payments');
+  if (payCnt) payCnt.textContent = payCount + ' payments';
+
+  var bEl = document.getElementById('hist-total-balance');
+  if (bEl) {
+    var fb = ismFormatBalance(balVal);
+    bEl.textContent = fb.text;
+    bEl.className = 'text-2xl font-black mt-1 ' + fb.colorClass;
+  }
+
+  var tbody = document.getElementById('hist-table-body');
+  if (!tbody) return;
+
+  if (txs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400">No transactions recorded for the selected filter.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = txs.map(function(t, idx) {
+    var isPur = t.kind === 'Purchase';
+    var badge = isPur
+      ? '<span class="px-2.5 py-1 rounded-full bg-teal-100 text-teal-800 text-xs font-bold"><i class="fa-solid fa-cart-shopping mr-1"></i>Purchase</span>'
+      : '<span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold"><i class="fa-solid fa-money-bill mr-1"></i>Payment</span>';
+
+    var actionBtn = isPur
+      ? `<button onclick="cancelHistoryPurchase('${t.id}')" title="Cancel purchase & restore stock" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold border border-rose-200 transition"><i class="fa-solid fa-xmark mr-1"></i>Cancel</button>`
+      : `<button onclick="cancelHistoryPayment('${t.id}')" title="Delete payment" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold border border-rose-200 transition"><i class="fa-solid fa-trash mr-1"></i>Delete</button>`;
+
+    return `
+      <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+        <td class="p-3 text-slate-500">${idx + 1}</td>
+        <td class="p-3 font-medium text-slate-700">${t.date} <span class="text-xs text-slate-400 block">${t.time || ''}</span></td>
+        <td class="p-3">${badge}</td>
+        <td class="p-3 font-bold text-slate-800">${t.displayName} <span class="text-xs text-slate-400 block">${t.buyerType}</span></td>
+        <td class="p-3 font-semibold text-slate-700">${t.product}</td>
+        <td class="p-3 text-center text-slate-600 font-bold">${isPur ? t.qty : '—'}</td>
+        <td class="p-3 text-right font-black ${isPur ? 'text-slate-900' : 'text-emerald-600'}">₹${Number(t.amount || 0).toFixed(2)}</td>
+        <td class="p-3 text-center">${actionBtn}</td>
+      </tr>`;
+  }).join('');
+}
+
+window.cancelHistoryPurchase = function(id) {
+  appConfirm('Cancel this purchase and restore the product quantity back to stock inventory?', {
+    title: 'Cancel Purchase',
+    okText: 'Yes, cancel & restock',
+    cancelText: 'Keep purchase',
+    type: 'danger'
+  }).then(function(confirmed) {
+    if (!confirmed) return;
+    google.script.run
+      .withSuccessHandler(function(res) {
+        ismShowNotif(res.success ? 'Purchase Canceled' : 'Error', res.message || 'Canceled successfully.', res.success ? 'success' : 'danger');
+        loadMarketHistory();
+        if (typeof loadStockCache === 'function') loadStockCache();
+        if (typeof loadAdminStockTable === 'function') loadAdminStockTable();
+      })
+      .withFailureHandler(function(err) {
+        ismShowNotif('Error', err.message || 'Failed to cancel purchase.', 'danger');
+      })
+      .cancelPurchase(id);
+  });
+};
+
+window.cancelHistoryPayment = function(id) {
+  appConfirm('Delete this payment record? This will adjust the balance accordingly.', {
+    title: 'Delete Payment',
+    okText: 'Yes, delete payment',
+    cancelText: 'Keep payment',
+    type: 'danger'
+  }).then(function(confirmed) {
+    if (!confirmed) return;
+    google.script.run
+      .withSuccessHandler(function(res) {
+        ismShowNotif(res.success ? 'Payment Deleted' : 'Error', res.message || 'Deleted successfully.', res.success ? 'success' : 'danger');
+        loadMarketHistory();
+      })
+      .withFailureHandler(function(err) {
+        ismShowNotif('Error', err.message || 'Failed to delete payment.', 'danger');
+      })
+      .cancelPayment(id);
+  });
+};
+
+window.exportHistoryPDF = function() {
+  if (!currentMarketHistoryData || !currentMarketHistoryData.transactions) {
+    return ismShowNotif('Notice', 'No transaction history loaded to export.', 'info');
+  }
+  var { jsPDF } = window.jspdf;
+  var doc = new jsPDF();
+  doc.setFontSize(16);
+  doc.text('IHSAN SUPER MARKET - TRANSACTION HISTORY', 14, 18);
+
+  var txs = currentMarketHistoryData.transactions;
+  var body = txs.map(function(t, i) {
+    return [
+      String(i + 1),
+      `${t.date} ${t.time || ''}`,
+      t.kind,
+      t.displayName,
+      t.product,
+      t.kind === 'Purchase' ? String(t.qty) : '—',
+      `₹${Number(t.amount || 0).toFixed(2)}`
+    ];
+  });
+
+  doc.autoTable({
+    startY: 26,
+    head: [['Sl', 'Date & Time', 'Type', 'Buyer/Payer', 'Details', 'Qty', 'Amount (₹)']],
+    body: body,
+    theme: 'grid',
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [13, 148, 136] }
+  });
+
+  doc.save('Market_Transaction_History.pdf');
+};
+
+// ── Initializations ──
+(function() {
+  function initAll() {
+    injectAddStudentForm();
+    injectHistoryTab();
+    updateClassActionsBar();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      initAll();
+      setTimeout(initAll, 500);
+      setTimeout(initAll, 1200);
+    });
+  } else {
+    initAll();
+    setTimeout(initAll, 500);
+    setTimeout(initAll, 1200);
+  }
 })();
 </script>
 
