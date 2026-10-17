@@ -2267,6 +2267,74 @@ input:where([type='button'], [type='reset'], [type='submit']),
       return { success: true, message: 'Payment canceled successfully.' };
     },
 
+    // Batch cancel history records (multiple selection deletion)
+    async batchCancelHistory(items) {
+      if (!Array.isArray(items) || items.length === 0) {
+        return { success: true, count: 0, message: 'No items selected.' };
+      }
+
+      const purchases = items.filter(x => x && x.kind === 'Purchase');
+      const payments  = items.filter(x => x && x.kind === 'Payment');
+
+      // 1. Process payments deletion
+      for (const pay of payments) {
+        try {
+          await api(`payments?ID=eq.${encodeURIComponent(pay.id)}`, { method: 'DELETE' });
+        } catch (e) {
+          console.warn('Error deleting payment:', pay.id, e);
+        }
+      }
+
+      // 2. Process purchases deletion and aggregate stock restoration
+      const restockMap = {}; // product -> qty
+      for (const pur of purchases) {
+        let prod = pur.product;
+        let qty = Number(pur.qty || 0);
+
+        if (!prod || !qty) {
+          try {
+            const rows = await api(`Purchases?ID=eq.${encodeURIComponent(pur.id)}`);
+            if (rows && rows.length > 0) {
+              prod = rows[0].Product;
+              qty = Number(rows[0].Qty || 1);
+            }
+          } catch (_) {}
+        }
+
+        if (prod && qty > 0) {
+          restockMap[prod] = (restockMap[prod] || 0) + qty;
+        }
+
+        try {
+          await api(`Purchases?ID=eq.${encodeURIComponent(pur.id)}`, { method: 'DELETE' });
+        } catch (e) {
+          console.warn('Error deleting purchase:', pur.id, e);
+        }
+      }
+
+      // 3. Restore stock quantities
+      for (const [prodName, addQty] of Object.entries(restockMap)) {
+        try {
+          const stockRows = await api(`Stock?Product=eq.${encodeURIComponent(prodName)}`);
+          if (stockRows && stockRows.length > 0) {
+            const currentQty = Number(stockRows[0].Qty || 0);
+            await api(`Stock?ID=eq.${encodeURIComponent(stockRows[0].ID)}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ Qty: currentQty + addQty })
+            });
+          }
+        } catch (e) {
+          console.warn('Error restoring stock for:', prodName, e);
+        }
+      }
+
+      return {
+        success: true,
+        count: items.length,
+        message: `Successfully deleted ${items.length} records (${purchases.length} purchases restocked, ${payments.length} payments deleted).`
+      };
+    },
+
     async updateStudentRecord(adNo, name, className, photoUrl) {
       await api(`Students?AdNo=eq.${encodeURIComponent(adNo)}`, {
         method: 'PATCH',
@@ -6094,6 +6162,7 @@ document.addEventListener('click', function(e) {
 
 
 
+
 <!-- ISM UI Patches v4: dialog positions, top toasts, admin settings, union delete, class delete/edit, financial status fix, balance color/sign rules, market history -->
 <style id="ism-ui-patches-css">
 /* ── Confirm dialogs: full-screen centered dark backdrop ── */
@@ -7044,26 +7113,11 @@ function injectHistoryTab() {
         </div>
       </div>
 
-      <!-- History Table -->
-      <div class="glass-card rounded-2xl p-6 shadow-xl space-y-4">
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm text-left">
-            <thead class="bg-slate-100 text-xs uppercase text-slate-600 font-extrabold">
-              <tr>
-                <th class="p-3">Sl.No</th>
-                <th class="p-3">Date & Time</th>
-                <th class="p-3">Type</th>
-                <th class="p-3">Buyer / Payer</th>
-                <th class="p-3">Item / Description</th>
-                <th class="p-3 text-center">Qty</th>
-                <th class="p-3 text-right">Amount (₹)</th>
-                <th class="p-3 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody id="hist-table-body">
-              <tr><td colspan="8" class="p-6 text-center text-slate-400">Loading history...</td></tr>
-            </tbody>
-          </table>
+      <!-- History Grouped View Container -->
+      <div id="hist-content-area" class="space-y-5">
+        <div class="glass-card rounded-2xl p-8 text-center text-slate-400 shadow-xl">
+          <i class="fa-solid fa-spinner fa-spin text-2xl text-teal-600 mb-2"></i>
+          <p class="text-sm font-semibold text-slate-600">Loading history records...</p>
         </div>
       </div>`;
     reportTab.parentNode.appendChild(histTab);
@@ -7116,6 +7170,10 @@ function injectHistoryTab() {
 })();
 
 var currentMarketHistoryData = null;
+window.selectedHistoryTxMap = new Map();
+window.allHistoryTxList = [];
+window.historyGroupData = null;
+window.collapsedMonths = new Set();
 
 window.setHistoryDatePreset = function(preset) {
   var fromInput = document.getElementById('hist-from-date');
@@ -7139,32 +7197,118 @@ window.setHistoryDatePreset = function(preset) {
   loadMarketHistory();
 };
 
+function formatMonthName(monthKey) {
+  if (!monthKey || monthKey === 'undated') return 'Undated';
+  var parts = monthKey.split('-');
+  if (parts.length >= 2) {
+    var y = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10);
+    if (!isNaN(y) && !isNaN(m)) {
+      var date = new Date(y, m - 1, 1);
+      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+  }
+  return monthKey;
+}
+
+function formatDayName(dayKey) {
+  if (!dayKey || dayKey === 'undated') return 'No Date Recorded';
+  var parts = dayKey.split('-');
+  if (parts.length === 3) {
+    var y = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10);
+    var d = parseInt(parts[2], 10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+      var date = new Date(y, m - 1, d);
+      return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    }
+  }
+  return dayKey;
+}
+
+function groupTransactionsByDate(txs) {
+  var months = {};
+  var monthOrder = [];
+
+  txs.forEach(function(t) {
+    var rawDate = (t.date || '').trim();
+    var monthKey = rawDate.length >= 7 ? rawDate.substring(0, 7) : 'undated';
+    var dayKey = rawDate || 'undated';
+
+    if (!months[monthKey]) {
+      months[monthKey] = {
+        key: monthKey,
+        title: formatMonthName(monthKey),
+        totalPurchases: 0,
+        totalPayments: 0,
+        count: 0,
+        dayOrder: [],
+        days: {}
+      };
+      monthOrder.push(monthKey);
+    }
+
+    var mObj = months[monthKey];
+    mObj.count++;
+    if (t.kind === 'Purchase') mObj.totalPurchases += Number(t.amount || 0);
+    else if (t.kind === 'Payment') mObj.totalPayments += Number(t.amount || 0);
+
+    if (!mObj.days[dayKey]) {
+      mObj.days[dayKey] = {
+        key: dayKey,
+        title: formatDayName(dayKey),
+        monthKey: monthKey,
+        totalPurchases: 0,
+        totalPayments: 0,
+        count: 0,
+        items: []
+      };
+      mObj.dayOrder.push(dayKey);
+    }
+
+    var dObj = mObj.days[dayKey];
+    dObj.count++;
+    if (t.kind === 'Purchase') dObj.totalPurchases += Number(t.amount || 0);
+    else if (t.kind === 'Payment') dObj.totalPayments += Number(t.amount || 0);
+
+    dObj.items.push(t);
+  });
+
+  return { months: months, monthOrder: monthOrder };
+}
+
 window.loadMarketHistory = function(btn) {
   var from = document.getElementById('hist-from-date')?.value || '';
   var to   = document.getElementById('hist-to-date')?.value || '';
   var type = document.getElementById('hist-type-filter')?.value || 'All';
   var q    = document.getElementById('hist-search')?.value || '';
 
-  var tbody = document.getElementById('hist-table-body');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading history...</td></tr>';
+  var container = document.getElementById('hist-content-area');
+  if (container) {
+    container.innerHTML = '<div class="glass-card rounded-2xl p-8 text-center text-slate-400 shadow-xl"><i class="fa-solid fa-spinner fa-spin text-2xl text-teal-600 mb-2"></i><p class="text-sm font-semibold text-slate-600">Loading history records...</p></div>';
+  }
+
+  // Clear current selections on load
+  window.selectedHistoryTxMap.clear();
 
   google.script.run
     .withSuccessHandler(function(res) {
       if (!res || !res.success) {
-        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-rose-500 font-bold">Unable to load transactions.</td></tr>';
+        if (container) container.innerHTML = '<div class="glass-card rounded-2xl p-6 text-center text-rose-500 font-bold shadow-xl">Unable to load transactions.</div>';
         return;
       }
       currentMarketHistoryData = res;
       renderMarketHistory(res);
     })
     .withFailureHandler(function(err) {
-      if (tbody) tbody.innerHTML = `<tr colspan="8" class="p-6 text-center text-rose-500 font-bold">${err?.message || 'Failed to load history.'}</td></tr>`;
+      if (container) container.innerHTML = `<div class="glass-card rounded-2xl p-6 text-center text-rose-500 font-bold shadow-xl">${err?.message || 'Failed to load history.'}</div>`;
     })
     .getMarketHistory(from, to, type, q);
 };
 
 function renderMarketHistory(res) {
   var txs = res.transactions || [];
+  window.allHistoryTxList = txs;
 
   // Summary numbers
   var purTotal = Number(res.totalPurchases || 0);
@@ -7191,37 +7335,378 @@ function renderMarketHistory(res) {
     bEl.className = 'text-2xl font-black mt-1 ' + fb.colorClass;
   }
 
-  var tbody = document.getElementById('hist-table-body');
-  if (!tbody) return;
+  var container = document.getElementById('hist-content-area');
+  if (!container) return;
 
   if (txs.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400">No transactions recorded for the selected filter.</td></tr>';
+    container.innerHTML = `
+      <div class="glass-card rounded-2xl p-10 text-center text-slate-400 shadow-xl space-y-2">
+        <i class="fa-solid fa-clock-rotate-left text-4xl text-slate-300"></i>
+        <p class="font-bold text-slate-700 text-base">No transactions recorded for the selected filter.</p>
+        <p class="text-xs text-slate-400">Try choosing a wider date range or clearing the search box above.</p>
+      </div>`;
     return;
   }
 
-  tbody.innerHTML = txs.map(function(t, idx) {
-    var isPur = t.kind === 'Purchase';
-    var badge = isPur
-      ? '<span class="px-2.5 py-1 rounded-full bg-teal-100 text-teal-800 text-xs font-bold"><i class="fa-solid fa-cart-shopping mr-1"></i>Purchase</span>'
-      : '<span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold"><i class="fa-solid fa-money-bill mr-1"></i>Payment</span>';
+  var groupData = groupTransactionsByDate(txs);
+  window.historyGroupData = groupData;
 
-    var actionBtn = isPur
-      ? `<button onclick="cancelHistoryPurchase('${t.id}')" title="Cancel purchase & restore stock" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold border border-rose-200 transition"><i class="fa-solid fa-xmark mr-1"></i>Cancel</button>`
-      : `<button onclick="cancelHistoryPayment('${t.id}')" title="Delete payment" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold border border-rose-200 transition"><i class="fa-solid fa-trash mr-1"></i>Delete</button>`;
+  // 1. Top Master Multi-Selection Toolbar
+  var html = `
+    <div class="glass-card rounded-2xl p-4 shadow-md border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <label class="flex items-center gap-2.5 cursor-pointer select-none">
+          <input type="checkbox" id="hist-master-select-all" onchange="toggleSelectAllHistory(this.checked)" class="w-5 h-5 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer transition">
+          <span class="text-sm font-extrabold text-slate-800">Select All History (${txs.length} records)</span>
+        </label>
+        <span id="hist-selected-badge" class="hidden px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800 shadow-sm">0 selected</span>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button type="button" id="hist-btn-deselect" onclick="deselectAllHistory()" class="hidden px-3 py-1.5 text-xs font-bold rounded-xl text-slate-600 hover:bg-slate-100 transition border border-slate-200">
+          <i class="fa-solid fa-xmark mr-1"></i>Deselect All
+        </button>
+        <button type="button" id="hist-btn-bulk-delete" onclick="executeBatchHistoryDelete()" class="hidden px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-2">
+          <i class="fa-solid fa-trash"></i>
+          <span>Delete Selected (<span id="hist-delete-count">0</span>)</span>
+        </button>
+      </div>
+    </div>`;
 
-    return `
-      <tr class="border-b border-slate-100 hover:bg-slate-50 transition ism-row-animate" style="animation-delay:${idx * 0.025}s">
-        <td class="p-3 text-slate-500">${idx + 1}</td>
-        <td class="p-3 font-medium text-slate-700">${t.date} <span class="text-xs text-slate-400 block">${t.time || ''}</span></td>
-        <td class="p-3">${badge}</td>
-        <td class="p-3 font-bold text-slate-800">${t.displayName} <span class="text-xs text-slate-400 block">${t.buyerType}</span></td>
-        <td class="p-3 font-semibold text-slate-700">${t.product}</td>
-        <td class="p-3 text-center text-slate-600 font-bold">${isPur ? t.qty : '—'}</td>
-        <td class="p-3 text-right font-black ${isPur ? 'text-slate-900' : 'text-emerald-600'}">₹${Number(t.amount || 0).toFixed(2)}</td>
-        <td class="p-3 text-center">${actionBtn}</td>
-      </tr>`;
-  }).join('');
+  // 2. Iterate Months & Days
+  groupData.monthOrder.forEach(function(mKey, mIdx) {
+    var m = groupData.months[mKey];
+    var isCollapsed = window.collapsedMonths.has(mKey);
+
+    html += `
+      <div class="month-group rounded-2xl border border-slate-200 shadow-md bg-white/90 backdrop-blur-sm overflow-hidden ism-row-animate" style="animation-delay:${mIdx * 0.04}s">
+        <!-- Month Header -->
+        <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-2 cursor-pointer select-none" title="Select entire month for deletion">
+              <input type="checkbox" id="hist-month-chk-${m.key}" data-month="${m.key}" onchange="toggleSelectMonth('${m.key}', this.checked)" class="hist-month-chk w-5 h-5 rounded border-slate-400 text-teal-500 focus:ring-teal-400 cursor-pointer transition">
+              <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Select Month</span>
+            </label>
+            <div class="flex items-center gap-2 ml-1">
+              <span class="text-base font-black text-white"><i class="fa-solid fa-calendar-days text-teal-400 mr-2"></i>${m.title}</span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/10 text-teal-300 border border-white/10">${m.count} ${m.count === 1 ? 'record' : 'records'}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 text-xs font-bold">
+            <span class="text-slate-300">Purchases: <span class="text-white font-black">₹${m.totalPurchases.toFixed(2)}</span></span>
+            <span class="text-slate-500">|</span>
+            <span class="text-slate-300">Payments: <span class="text-emerald-400 font-black">₹${m.totalPayments.toFixed(2)}</span></span>
+            <button type="button" onclick="toggleMonthCollapse('${m.key}')" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white transition text-xs font-semibold ml-1" title="Collapse / Expand Month">
+              <i id="month-icon-${m.key}" class="fa-solid ${isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'}"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Month Body (Days list) -->
+        <div id="month-days-${m.key}" class="p-4 space-y-4 ${isCollapsed ? 'hidden' : ''}">`;
+
+    m.dayOrder.forEach(function(dKey) {
+      var d = m.days[dKey];
+
+      html += `
+        <div class="day-group rounded-xl border border-slate-200 overflow-hidden bg-white shadow-sm">
+          <!-- Day Header -->
+          <div class="bg-slate-50/90 px-4 py-2.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <label class="flex items-center gap-2 cursor-pointer select-none" title="Select entire day for deletion">
+                <input type="checkbox" id="hist-day-chk-${d.key}" data-month="${m.key}" data-day="${d.key}" onchange="toggleSelectDay('${d.key}', this.checked)" class="hist-day-chk w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer transition">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Select Day</span>
+              </label>
+              <div class="flex items-center gap-2 ml-1">
+                <span class="text-xs font-black text-slate-800 uppercase tracking-wide"><i class="fa-regular fa-clock text-teal-600 mr-1.5"></i>${d.title}</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-200/70 text-slate-600">${d.count} records</span>
+              </div>
+            </div>
+            <div class="text-xs font-semibold text-slate-500 flex items-center gap-3">
+              <span>Pur: <strong class="text-slate-800">₹${d.totalPurchases.toFixed(2)}</strong></span>
+              <span class="text-slate-300">|</span>
+              <span>Pay: <strong class="text-emerald-600">₹${d.totalPayments.toFixed(2)}</strong></span>
+            </div>
+          </div>
+
+          <!-- Day Transactions Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+              <thead class="bg-slate-100/60 text-[11px] uppercase text-slate-500 font-extrabold border-b border-slate-100">
+                <tr>
+                  <th class="p-2.5 w-10 text-center"></th>
+                  <th class="p-2.5 w-10 text-slate-400">#</th>
+                  <th class="p-2.5">Time</th>
+                  <th class="p-2.5">Type</th>
+                  <th class="p-2.5">Buyer / Payer</th>
+                  <th class="p-2.5">Item / Description</th>
+                  <th class="p-2.5 text-center">Qty</th>
+                  <th class="p-2.5 text-right">Amount (₹)</th>
+                  <th class="p-2.5 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">`;
+
+      d.items.forEach(function(t, idx) {
+        var isPur = t.kind === 'Purchase';
+        var badge = isPur
+          ? '<span class="px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 text-[11px] font-bold inline-flex items-center"><i class="fa-solid fa-cart-shopping mr-1 text-[10px]"></i>Purchase</span>'
+          : '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold inline-flex items-center"><i class="fa-solid fa-money-bill mr-1 text-[10px]"></i>Payment</span>';
+
+        var actionBtn = isPur
+          ? `<button type="button" onclick="cancelHistoryPurchase('${t.id}')" title="Cancel purchase & restore stock" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold border border-rose-200 transition"><i class="fa-solid fa-xmark mr-1"></i>Cancel</button>`
+          : `<button type="button" onclick="cancelHistoryPayment('${t.id}')" title="Delete payment" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold border border-rose-200 transition"><i class="fa-solid fa-trash mr-1"></i>Delete</button>`;
+
+        html += `
+          <tr class="hover:bg-teal-50/20 transition">
+            <td class="p-2.5 text-center">
+              <input type="checkbox" class="hist-item-chk w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer transition" data-id="${t.id}" data-day="${d.key}" data-month="${m.key}" onchange="toggleSelectTx('${t.id}', this.checked)" title="Select this record for deletion">
+            </td>
+            <td class="p-2.5 text-xs text-slate-400 font-mono">${idx + 1}</td>
+            <td class="p-2.5 font-medium text-slate-600 text-xs whitespace-nowrap">${t.time || '—'}</td>
+            <td class="p-2.5 whitespace-nowrap">${badge}</td>
+            <td class="p-2.5 font-bold text-slate-800 text-xs">${t.displayName} <span class="text-[10px] text-slate-400 font-normal block">${t.buyerType}</span></td>
+            <td class="p-2.5 font-semibold text-slate-700 text-xs">${t.product}</td>
+            <td class="p-2.5 text-center text-slate-600 font-bold text-xs">${isPur ? t.qty : '—'}</td>
+            <td class="p-2.5 text-right font-black text-xs ${isPur ? 'text-slate-900' : 'text-emerald-600'}">₹${Number(t.amount || 0).toFixed(2)}</td>
+            <td class="p-2.5 text-center whitespace-nowrap">${actionBtn}</td>
+          </tr>`;
+      });
+
+      html += `
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    });
+
+    html += `
+        </div>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+  updateSelectionUI();
 }
+
+window.toggleMonthCollapse = function(mKey) {
+  var el = document.getElementById('month-days-' + mKey);
+  var icon = document.getElementById('month-icon-' + mKey);
+  if (!el) return;
+  if (el.classList.contains('hidden')) {
+    el.classList.remove('hidden');
+    if (icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
+    window.collapsedMonths.delete(mKey);
+  } else {
+    el.classList.add('hidden');
+    if (icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+    window.collapsedMonths.add(mKey);
+  }
+};
+
+window.toggleSelectAllHistory = function(checked) {
+  var all = window.allHistoryTxList || [];
+  if (checked) {
+    all.forEach(function(t) { window.selectedHistoryTxMap.set(t.id, t); });
+  } else {
+    window.selectedHistoryTxMap.clear();
+  }
+  updateSelectionUI();
+};
+
+window.deselectAllHistory = function() {
+  window.selectedHistoryTxMap.clear();
+  updateSelectionUI();
+};
+
+window.toggleSelectMonth = function(mKey, checked) {
+  if (!window.historyGroupData || !window.historyGroupData.months[mKey]) return;
+  var mObj = window.historyGroupData.months[mKey];
+  Object.keys(mObj.days).forEach(function(dKey) {
+    mObj.days[dKey].items.forEach(function(t) {
+      if (checked) window.selectedHistoryTxMap.set(t.id, t);
+      else window.selectedHistoryTxMap.delete(t.id);
+    });
+  });
+  updateSelectionUI();
+};
+
+window.toggleSelectDay = function(dKey, checked) {
+  if (!window.historyGroupData || !window.historyGroupData.months) return;
+  Object.keys(window.historyGroupData.months).forEach(function(mKey) {
+    var mObj = window.historyGroupData.months[mKey];
+    if (mObj.days[dKey]) {
+      mObj.days[dKey].items.forEach(function(t) {
+        if (checked) window.selectedHistoryTxMap.set(t.id, t);
+        else window.selectedHistoryTxMap.delete(t.id);
+      });
+    }
+  });
+  updateSelectionUI();
+};
+
+window.toggleSelectTx = function(id, checked) {
+  if (checked) {
+    var item = (window.allHistoryTxList || []).find(function(t) { return t.id === id; });
+    if (item) window.selectedHistoryTxMap.set(id, item);
+  } else {
+    window.selectedHistoryTxMap.delete(id);
+  }
+  updateSelectionUI();
+};
+
+function updateSelectionUI() {
+  var total = (window.allHistoryTxList || []).length;
+  var selectedCount = window.selectedHistoryTxMap.size;
+
+  // 1. Master checkbox
+  var masterChk = document.getElementById('hist-master-select-all');
+  if (masterChk) {
+    if (total > 0 && selectedCount === total) {
+      masterChk.checked = true;
+      masterChk.indeterminate = false;
+    } else if (selectedCount > 0) {
+      masterChk.checked = false;
+      masterChk.indeterminate = true;
+    } else {
+      masterChk.checked = false;
+      masterChk.indeterminate = false;
+    }
+  }
+
+  // 2. Month and Day checkboxes
+  if (window.historyGroupData && window.historyGroupData.months) {
+    Object.keys(window.historyGroupData.months).forEach(function(mKey) {
+      var mObj = window.historyGroupData.months[mKey];
+      var mChk = document.getElementById('hist-month-chk-' + mKey);
+
+      var mItems = [];
+      Object.keys(mObj.days).forEach(function(dKey) {
+        mItems = mItems.concat(mObj.days[dKey].items);
+      });
+      var mSelectedCount = mItems.filter(function(t) { return window.selectedHistoryTxMap.has(t.id); }).length;
+
+      if (mChk) {
+        if (mItems.length > 0 && mSelectedCount === mItems.length) {
+          mChk.checked = true;
+          mChk.indeterminate = false;
+        } else if (mSelectedCount > 0) {
+          mChk.checked = false;
+          mChk.indeterminate = true;
+        } else {
+          mChk.checked = false;
+          mChk.indeterminate = false;
+        }
+      }
+
+      // Day checkboxes inside this month
+      Object.keys(mObj.days).forEach(function(dKey) {
+        var dObj = mObj.days[dKey];
+        var dChk = document.getElementById('hist-day-chk-' + dKey);
+        if (dChk) {
+          var dSelectedCount = dObj.items.filter(function(t) { return window.selectedHistoryTxMap.has(t.id); }).length;
+          if (dObj.items.length > 0 && dSelectedCount === dObj.items.length) {
+            dChk.checked = true;
+            dChk.indeterminate = false;
+          } else if (dSelectedCount > 0) {
+            dChk.checked = false;
+            dChk.indeterminate = true;
+          } else {
+            dChk.checked = false;
+            dChk.indeterminate = false;
+          }
+        }
+      });
+    });
+  }
+
+  // 3. Item row checkboxes
+  document.querySelectorAll('.hist-item-chk').forEach(function(chk) {
+    var id = chk.getAttribute('data-id');
+    chk.checked = window.selectedHistoryTxMap.has(id);
+  });
+
+  // 4. Batch Delete Toolbar display
+  var badge = document.getElementById('hist-selected-badge');
+  var deselectBtn = document.getElementById('hist-btn-deselect');
+  var deleteBtn = document.getElementById('hist-btn-bulk-delete');
+  var deleteCountEl = document.getElementById('hist-delete-count');
+
+  if (selectedCount > 0) {
+    var selectedArr = Array.from(window.selectedHistoryTxMap.values());
+    var pCount = selectedArr.filter(function(x) { return x.kind === 'Purchase'; }).length;
+    var payCount = selectedArr.filter(function(x) { return x.kind === 'Payment'; }).length;
+    var sumAmt = selectedArr.reduce(function(s, x) { return s + Number(x.amount || 0); }, 0);
+
+    if (badge) {
+      badge.classList.remove('hidden');
+      badge.textContent = `${selectedCount} selected (${pCount} pur, ${payCount} pay — ₹${sumAmt.toFixed(2)})`;
+    }
+    if (deselectBtn) deselectBtn.classList.remove('hidden');
+    if (deleteBtn) {
+      deleteBtn.classList.remove('hidden');
+      deleteBtn.disabled = false;
+    }
+    if (deleteCountEl) deleteCountEl.textContent = selectedCount;
+  } else {
+    if (badge) badge.classList.add('hidden');
+    if (deselectBtn) deselectBtn.classList.add('hidden');
+    if (deleteBtn) {
+      deleteBtn.classList.add('hidden');
+      deleteBtn.disabled = true;
+    }
+    if (deleteCountEl) deleteCountEl.textContent = '0';
+  }
+}
+
+window.executeBatchHistoryDelete = function() {
+  var selectedCount = window.selectedHistoryTxMap.size;
+  if (selectedCount === 0) {
+    return ismShowNotif('Notice', 'No transactions selected for deletion.', 'info');
+  }
+
+  var selectedArr = Array.from(window.selectedHistoryTxMap.values());
+  var purchases = selectedArr.filter(function(x) { return x.kind === 'Purchase'; });
+  var payments  = selectedArr.filter(function(x) { return x.kind === 'Payment'; });
+  var totalAmt  = selectedArr.reduce(function(s, x) { return s + Number(x.amount || 0); }, 0);
+
+  var msg = `Are you sure you want to permanently delete these <strong>${selectedCount}</strong> selected history records?<br><br>` +
+    `<div class="text-xs bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 text-slate-700">` +
+    (purchases.length > 0 ? `<div>• <strong>${purchases.length} Purchases:</strong> Corresponding items will be restocked back to inventory.</div>` : '') +
+    (payments.length > 0 ? `<div>• <strong>${payments.length} Payments:</strong> Balances will be adjusted accordingly.</div>` : '') +
+    `<div>• <strong>Total Value:</strong> ₹${totalAmt.toFixed(2)}</div>` +
+    `</div>`;
+
+  appConfirm(msg, {
+    title: `Delete ${selectedCount} Selected Records`,
+    okText: `Yes, Delete ${selectedCount} Records`,
+    cancelText: 'Keep Records',
+    type: 'danger'
+  }).then(function(confirmed) {
+    if (!confirmed) return;
+
+    var btn = document.getElementById('hist-btn-bulk-delete');
+    var origHTML = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Deleting...';
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+        ismShowNotif(res && res.success ? 'Records Deleted' : 'Error', res ? res.message : 'Deleted successfully.', res && res.success ? 'success' : 'danger');
+        window.selectedHistoryTxMap.clear();
+        loadMarketHistory();
+        if (typeof loadStockCache === 'function') loadStockCache();
+        if (typeof loadAdminStockTable === 'function') loadAdminStockTable();
+      })
+      .withFailureHandler(function(err) {
+        if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+        ismShowNotif('Error', err && err.message ? err.message : 'Failed to delete records.', 'danger');
+      })
+      .batchCancelHistory(selectedArr);
+  });
+};
 
 window.cancelHistoryPurchase = function(id) {
   appConfirm('Cancel this purchase and restore the product quantity back to stock inventory?', {

@@ -425,6 +425,74 @@
       return { success: true, message: 'Payment canceled successfully.' };
     },
 
+    // Batch cancel history records (multiple selection deletion)
+    async batchCancelHistory(items) {
+      if (!Array.isArray(items) || items.length === 0) {
+        return { success: true, count: 0, message: 'No items selected.' };
+      }
+
+      const purchases = items.filter(x => x && x.kind === 'Purchase');
+      const payments  = items.filter(x => x && x.kind === 'Payment');
+
+      // 1. Process payments deletion
+      for (const pay of payments) {
+        try {
+          await api(`payments?ID=eq.${encodeURIComponent(pay.id)}`, { method: 'DELETE' });
+        } catch (e) {
+          console.warn('Error deleting payment:', pay.id, e);
+        }
+      }
+
+      // 2. Process purchases deletion and aggregate stock restoration
+      const restockMap = {}; // product -> qty
+      for (const pur of purchases) {
+        let prod = pur.product;
+        let qty = Number(pur.qty || 0);
+
+        if (!prod || !qty) {
+          try {
+            const rows = await api(`Purchases?ID=eq.${encodeURIComponent(pur.id)}`);
+            if (rows && rows.length > 0) {
+              prod = rows[0].Product;
+              qty = Number(rows[0].Qty || 1);
+            }
+          } catch (_) {}
+        }
+
+        if (prod && qty > 0) {
+          restockMap[prod] = (restockMap[prod] || 0) + qty;
+        }
+
+        try {
+          await api(`Purchases?ID=eq.${encodeURIComponent(pur.id)}`, { method: 'DELETE' });
+        } catch (e) {
+          console.warn('Error deleting purchase:', pur.id, e);
+        }
+      }
+
+      // 3. Restore stock quantities
+      for (const [prodName, addQty] of Object.entries(restockMap)) {
+        try {
+          const stockRows = await api(`Stock?Product=eq.${encodeURIComponent(prodName)}`);
+          if (stockRows && stockRows.length > 0) {
+            const currentQty = Number(stockRows[0].Qty || 0);
+            await api(`Stock?ID=eq.${encodeURIComponent(stockRows[0].ID)}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ Qty: currentQty + addQty })
+            });
+          }
+        } catch (e) {
+          console.warn('Error restoring stock for:', prodName, e);
+        }
+      }
+
+      return {
+        success: true,
+        count: items.length,
+        message: `Successfully deleted ${items.length} records (${purchases.length} purchases restocked, ${payments.length} payments deleted).`
+      };
+    },
+
     async updateStudentRecord(adNo, name, className, photoUrl) {
       await api(`Students?AdNo=eq.${encodeURIComponent(adNo)}`, {
         method: 'PATCH',
