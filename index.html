@@ -3209,6 +3209,9 @@ input:where([type='button'], [type='reset'], [type='submit']),
   
 
 
+  
+
+
 
   
   <header class="glass-dark sticky top-0 z-40 text-white shadow-xl">
@@ -6342,19 +6345,20 @@ document.addEventListener('click', function(e) {
 
 
 
+
 <!-- ISM UI Patches v4: dialog positions, top toasts, admin settings, union delete, class delete/edit, financial status fix, balance color/sign rules, market history -->
 <style id="ism-ui-patches-css">
 /* ═══════════════════════════════════════════════════════════════════════
-   PREMIUM DARK-GLASS OUTLINE BUTTONS (As per User Reference Image)
+   PREMIUM OPAQUE & HIGH-CONTRAST ACTION BUTTONS (Decreased Transparency)
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Universal Button Reset & Base Styling */
+/* Universal Button Base Styling */
 button, 
 .button, 
 [role="button"],
 input[type="button"],
 input[type="submit"] {
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   font-family: 'Plus Jakarta Sans', Inter, system-ui, -apple-system, sans-serif !important;
   font-weight: 700 !important;
   font-size: 13.5px !important;
@@ -6364,148 +6368,209 @@ input[type="submit"] {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 7px !important;
+  gap: 8px !important;
   user-select: none !important;
   -webkit-tap-highlight-color: transparent !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
 button:hover:not(:disabled),
 .button:hover:not(:disabled),
 input[type="button"]:hover:not(:disabled),
 input[type="submit"]:hover:not(:disabled) {
-  transform: translateY(-1.5px);
+  transform: translateY(-2px);
 }
 
 button:active:not(:disabled),
 .button:active:not(:disabled),
 input[type="button"]:active:not(:disabled),
 input[type="submit"]:active:not(:disabled) {
-  transform: scale(0.97) !important;
+  transform: translateY(0) scale(0.98) !important;
 }
 
-/* 1. Primary Teal / Mint Action Buttons (Sign In, Add Union, Add Student, Add Stock, Pay, Live Stock) */
-/* Exactly like [Live Stock List] in reference screenshot */
+button:disabled,
+.button:disabled {
+  opacity: 0.65 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* 1. Primary Solid Teal Action Buttons (Student Sign In, Add Student, Add Union, Add Stock, Complete Purchase, Record Payment, Dialog OK) */
 button[class*="bg-teal-600"],
 button[class*="bg-teal-500"],
 button[class*="bg-teal-700"],
-button[class*="bg-teal-600/30"],
-button[class*="bg-teal-500/40"],
-button[onclick*="openLiveStockModal"],
+button[class*="bg-emerald-600"],
+button[class*="bg-emerald-500"],
+button[class*="bg-emerald-700"],
+#app-dialog-ok,
 .btn-primary,
 .btn-teal {
-  background: rgba(13, 148, 136, 0.22) !important;
-  border: 1.5px solid #14b8a6 !important;
-  color: #2dd4bf !important;
-  box-shadow: 0 2px 12px rgba(13, 148, 136, 0.2) !important;
-}
-
-button[class*="bg-teal-600"] i,
-button[class*="bg-teal-500"] i,
-button[class*="bg-teal-700"] i,
-button[class*="bg-teal-600/30"] i,
-button[onclick*="openLiveStockModal"] i {
-  color: #2dd4bf !important;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%) !important;
+  border: 1px solid #14b8a6 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.38) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
 }
 
 button[class*="bg-teal-600"]:hover:not(:disabled),
 button[class*="bg-teal-500"]:hover:not(:disabled),
 button[class*="bg-teal-700"]:hover:not(:disabled),
-button[class*="bg-teal-600/30"]:hover:not(:disabled),
-button[onclick*="openLiveStockModal"]:hover:not(:disabled) {
-  background: rgba(13, 148, 136, 0.42) !important;
+button[class*="bg-emerald-600"]:hover:not(:disabled),
+button[class*="bg-emerald-500"]:hover:not(:disabled),
+#app-dialog-ok:hover:not(:disabled),
+.btn-primary:hover:not(:disabled),
+.btn-teal:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%) !important;
   border-color: #2dd4bf !important;
   color: #ffffff !important;
-  box-shadow: 0 0 16px rgba(45, 212, 191, 0.38) !important;
+  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.5) !important;
 }
 
-button[class*="bg-teal-600"]:hover:not(:disabled) i,
-button[class*="bg-teal-500"]:hover:not(:disabled) i,
-button[onclick*="openLiveStockModal"]:hover:not(:disabled) i {
+button[class*="bg-teal-600"] i,
+button[class*="bg-teal-500"] i,
+button[class*="bg-teal-700"] i,
+button[class*="bg-emerald-600"] i,
+#app-dialog-ok i,
+.btn-primary i {
   color: #ffffff !important;
 }
 
-/* 2. Secondary Dark Slate Buttons (Settings, Admin Sign In, Filter, Batch Edit, Close) */
-/* Exactly like [Settings] in reference screenshot */
+/* 2. Solid Dark Slate Action Buttons (Process Bulk Upload, Admin Sign In, Batch Actions) */
 button[class*="bg-slate-800"],
 button[class*="bg-slate-900"],
 button[class*="bg-slate-700"],
-button[id*="admin-settings-btn"],
 .btn-dark,
 .btn-slate {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.24) !important;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  border: 1px solid #334155 !important;
   color: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
-}
-
-button[class*="bg-slate-800"] i,
-button[class*="bg-slate-900"] i,
-button[id*="admin-settings-btn"] i {
-  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.32) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
 }
 
 button[class*="bg-slate-800"]:hover:not(:disabled),
 button[class*="bg-slate-900"]:hover:not(:disabled),
-button[id*="admin-settings-btn"]:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.22) !important;
-  border-color: rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.2) !important;
+button[class*="bg-slate-700"]:hover:not(:disabled),
+.btn-dark:hover:not(:disabled),
+.btn-slate:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0f172a 0%, #020617 100%) !important;
+  border-color: #475569 !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.45) !important;
 }
 
-/* 3. Danger / Destructive Action Buttons (Sign Out, Logout, Delete, Cancel Purchase, Clear) */
+button[class*="bg-slate-800"] i,
+button[class*="bg-slate-900"] i,
+button[class*="bg-slate-700"] i,
+.btn-dark i {
+  color: #ffffff !important;
+}
+
+/* 3. Solid Crimson/Rose Action Buttons (Delete Stock, Delete Student, Sign Out, Export PDF) */
 button[class*="bg-rose-600"],
 button[class*="bg-rose-500"],
 button[class*="bg-rose-700"],
 button[class*="bg-red-600"],
-button[id*="logout-btn"],
+button[class*="bg-red-700"],
+#btn-delete-stock-modal,
+#report-download-pdf,
 .btn-danger {
-  background: rgba(225, 29, 72, 0.18) !important;
-  border: 1.5px solid #f43f5e !important;
-  color: #fb7185 !important;
-  box-shadow: 0 2px 10px rgba(225, 29, 72, 0.2) !important;
-}
-
-button[class*="bg-rose-600"] i,
-button[class*="bg-rose-500"] i,
-button[id*="logout-btn"] i {
-  color: #fb7185 !important;
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+  border: 1px solid #f43f5e !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(225, 29, 72, 0.35) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
 }
 
 button[class*="bg-rose-600"]:hover:not(:disabled),
 button[class*="bg-rose-500"]:hover:not(:disabled),
-button[id*="logout-btn"]:hover:not(:disabled) {
-  background: rgba(225, 29, 72, 0.38) !important;
+button[class*="bg-red-600"]:hover:not(:disabled),
+#btn-delete-stock-modal:hover:not(:disabled),
+#report-download-pdf:hover:not(:disabled),
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #be123c 0%, #9f1239 100%) !important;
   border-color: #fb7185 !important;
   color: #ffffff !important;
-  box-shadow: 0 0 16px rgba(244, 63, 94, 0.35) !important;
+  box-shadow: 0 6px 20px rgba(225, 29, 72, 0.48) !important;
 }
 
-button[class*="bg-rose-600"]:hover:not(:disabled) i,
-button[id*="logout-btn"]:hover:not(:disabled) i {
+button[class*="bg-rose-600"] i,
+button[class*="bg-rose-500"] i,
+button[class*="bg-red-600"] i,
+#btn-delete-stock-modal i,
+.btn-danger i {
   color: #ffffff !important;
 }
 
-/* 4. Table Inline Action Buttons (Edit, Delete, History) */
+/* 4. Header Bar Action Buttons (Live Stock List, Settings, Sign Out) */
+header button[onclick*="openLiveStockModal"] {
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.85) 0%, rgba(15, 118, 110, 0.95) 100%) !important;
+  border: 1.5px solid #2dd4bf !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(20, 184, 166, 0.35) !important;
+}
+header button[onclick*="openLiveStockModal"]:hover {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%) !important;
+  border-color: #5eead4 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(45, 212, 191, 0.5) !important;
+}
+header button[onclick*="openLiveStockModal"] i {
+  color: #5eead4 !important;
+}
+header button[onclick*="openLiveStockModal"]:hover i {
+  color: #ffffff !important;
+}
+
+header #admin-settings-btn,
+header #nav-actions button:not([onclick*="openLiveStockModal"]):not(#logout-btn) {
+  background: rgba(30, 41, 59, 0.88) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+header #admin-settings-btn:hover,
+header #nav-actions button:not([onclick*="openLiveStockModal"]):not(#logout-btn):hover {
+  background: rgba(51, 65, 85, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.2) !important;
+}
+
+header #logout-btn {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+  border: 1.5px solid #f43f5e !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(225, 29, 72, 0.35) !important;
+}
+header #logout-btn:hover {
+  background: linear-gradient(135deg, #be123c 0%, #9f1239 100%) !important;
+}
+
+/* 5. Table Inline Action Buttons (Edit, Delete) */
 button[onclick*="openEditStock"],
 button[onclick*="openEditPurchase"],
 button[onclick*="openEditPayment"],
 button[class*="bg-teal-50"] {
-  background: rgba(13, 148, 136, 0.14) !important;
-  border: 1.2px solid #14b8a6 !important;
+  background: #f0fdfa !important;
+  border: 1.5px solid #14b8a6 !important;
   color: #0f766e !important;
   border-radius: 8px !important;
   padding: 5px 12px !important;
   font-size: 12px !important;
+  box-shadow: 0 1px 3px rgba(13, 148, 136, 0.12) !important;
 }
-
 button[onclick*="openEditStock"]:hover,
 button[onclick*="openEditPurchase"]:hover,
 button[onclick*="openEditPayment"]:hover,
 button[class*="bg-teal-50"]:hover {
   background: #0d9488 !important;
   color: #ffffff !important;
-  box-shadow: 0 0 10px rgba(20, 184, 166, 0.3) !important;
+  border-color: #0d9488 !important;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.35) !important;
+}
+button[onclick*="openEditStock"] i,
+button[class*="bg-teal-50"] i {
+  color: #0f766e !important;
 }
 button[onclick*="openEditStock"]:hover i,
 button[class*="bg-teal-50"]:hover i {
@@ -6514,26 +6579,87 @@ button[class*="bg-teal-50"]:hover i {
 
 button[onclick*="deleteStockItem"],
 button[class*="bg-rose-50"] {
-  background: rgba(225, 29, 72, 0.14) !important;
-  border: 1.2px solid #f43f5e !important;
-  color: #e11d48 !important;
+  background: #fff1f2 !important;
+  border: 1.5px solid #f43f5e !important;
+  color: #be123c !important;
   border-radius: 8px !important;
   padding: 5px 12px !important;
   font-size: 12px !important;
+  box-shadow: 0 1px 3px rgba(225, 29, 72, 0.12) !important;
 }
-
 button[onclick*="deleteStockItem"]:hover,
 button[class*="bg-rose-50"]:hover {
   background: #e11d48 !important;
   color: #ffffff !important;
-  box-shadow: 0 0 10px rgba(225, 29, 72, 0.3) !important;
+  border-color: #e11d48 !important;
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.35) !important;
+}
+button[onclick*="deleteStockItem"] i,
+button[class*="bg-rose-50"] i {
+  color: #be123c !important;
 }
 button[onclick*="deleteStockItem"]:hover i,
 button[class*="bg-rose-50"]:hover i {
   color: #ffffff !important;
 }
 
-/* 5. Sub-tabs & Navigation Pills (Student, Unions, Stock, Reports, History) */
+/* 6. Secondary / Cancel / Neutral Buttons */
+#app-dialog-cancel,
+button[class*="border-slate-200"],
+button[class*="border-slate-300"],
+button[class*="bg-slate-100"],
+button[class*="bg-slate-200"],
+.btn-secondary {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+#app-dialog-cancel:hover,
+button[class*="border-slate-200"]:hover,
+button[class*="border-slate-300"]:hover,
+button[class*="bg-slate-100"]:hover,
+button[class*="bg-slate-200"]:hover,
+.btn-secondary:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+/* 7. Modal Close 'X' and Icon-Only Floating Buttons */
+button.absolute,
+button[onclick*="closeEdit"],
+button[onclick*="closeLiveStockModal"],
+button[onclick*="showView('view-landing')"] {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 6px !important;
+  border-radius: 9999px !important;
+}
+button.absolute:hover,
+button[onclick*="closeEdit"]:hover,
+button[onclick*="closeLiveStockModal"]:hover,
+button[onclick*="showView('view-landing')"]:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* 8. Autocomplete Suggestion Items */
+button.suggestion-item {
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  justify-content: flex-start !important;
+  display: flex !important;
+  border: none !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+button.suggestion-item:hover {
+  background: #f0fdfa !important;
+  transform: none !important;
+}
+
+/* 9. Navigation Tabs & Sub-tabs */
 .admin-tab-btn,
 button[onclick*="switchAdminSubTab"] {
   border-radius: 10px !important;
@@ -6543,12 +6669,140 @@ button[onclick*="switchAdminSubTab"] {
 
 button[onclick*="switchAdminSubTab"].active,
 .admin-tab-btn.active {
-  background: rgba(13, 148, 136, 0.2) !important;
-  border: 1.5px solid #14b8a6 !important;
+  background: #ccfbf1 !important;
+  border: 1.5px solid #0d9488 !important;
   color: #0f766e !important;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.2) !important;
 }
 
-/* 6. Landing Big Action Cards (Student Sign In & Admin Sign In) */
+button[onclick*="switchAdminSubTab"]:not(.active),
+.admin-tab-btn:not(.active) {
+  background: #f8fafc !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: #64748b !important;
+  box-shadow: none !important;
+}
+button[onclick*="switchAdminSubTab"]:not(.active):hover,
+.admin-tab-btn:not(.active):hover {
+  background: #f1f5f9 !important;
+  color: #1e293b !important;
+  border-color: #cbd5e1 !important;
+}
+
+button[id^="tab-btn-"]:not([class*="bg-teal"]) {
+  background: transparent !important;
+  color: #64748b !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+}
+button[id^="tab-btn-"]:not([class*="bg-teal"]):hover {
+  background: #f1f5f9 !important;
+  color: #1e293b !important;
+}
+
+button[id^="sub-btn-"] {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+button[id^="sub-btn-"]:hover {
+  transform: none !important;
+}
+
+/* 10. Auth Role Switcher Tabs */
+#auth-role-tabs button {
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+#auth-role-tabs button:not([class*="bg-teal"]):not([class*="bg-slate"]) {
+  background: transparent !important;
+  color: #64748b !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+}
+#auth-role-tabs button:not([class*="bg-teal"]):not([class*="bg-slate"]):hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+  color: #1e293b !important;
+}
+#auth-role-tabs button[class*="bg-teal-600"] {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.35) !important;
+}
+#auth-role-tabs button[class*="bg-slate-800"] {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3) !important;
+}
+
+/* 11. Add Product slot & Cart buttons */
+button[onclick*="addPurchaseItem"] {
+  background: #f0fdfa !important;
+  border: 1.5px solid #0d9488 !important;
+  color: #0f766e !important;
+}
+button[onclick*="addPurchaseItem"]:hover {
+  background: #0d9488 !important;
+  color: #ffffff !important;
+}
+
+/* 12. Quick Options & Refresh Buttons */
+button.quick-option {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: inherit !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06) !important;
+}
+button.quick-option:hover {
+  transform: translateY(-2px) !important;
+  border-color: #0d9488 !important;
+  box-shadow: 0 8px 24px rgba(13, 148, 136, 0.12) !important;
+}
+
+button.refresh-mini {
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  border-radius: 9999px !important;
+  box-shadow: none !important;
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0d9488 !important;
+}
+button.refresh-mini:hover {
+  background: #f0fdfa !important;
+  border-color: #0d9488 !important;
+  transform: rotate(45deg) !important;
+}
+
+/* 13. Class filter pills */
+button.class-filter {
+  box-shadow: none !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  padding: 6px 14px !important;
+}
+button.class-filter:not(.active-filter) {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+button.class-filter:not(.active-filter):hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+button.class-filter.active-filter {
+  background: #0d9488 !important;
+  color: #ffffff !important;
+  border: 1px solid #0d9488 !important;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3) !important;
+}
+
+/* 14. Landing Big Action Cards (Student Sign In & Admin Sign In) */
 #view-landing .grid > div {
   border-radius: 18px !important;
   border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
@@ -6560,7 +6814,7 @@ button[onclick*="switchAdminSubTab"].active,
   box-shadow: 0 14px 40px rgba(13, 148, 136, 0.3) !important;
 }
 
-/* 7. Icon Spacing */
+/* 15. Icon Spacing */
 button i,
 .button i {
   margin-right: 6px;
@@ -7295,9 +7549,9 @@ async function saveAdminSettings(btn) {
     var btn = document.createElement('button');
     btn.id = 'admin-settings-btn';
     btn.className = 'hidden';
-    btn.style.cssText = 'padding:7px 14px;font-size:13px;font-weight:700;border-radius:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:white;cursor:pointer;transition:background .2s;margin-right:6px';
-    btn.onmouseover = function() { this.style.background = 'rgba(255,255,255,0.22)'; };
-    btn.onmouseout  = function() { this.style.background = 'rgba(255,255,255,0.12)'; };
+    btn.style.cssText = 'padding:7px 14px;font-size:13px;font-weight:700;border-radius:10px;background:rgba(30,41,59,0.88);border:1.5px solid rgba(255,255,255,0.28);color:white;cursor:pointer;transition:all .2s;margin-right:6px';
+    btn.onmouseover = function() { this.style.background = 'rgba(51,65,85,0.95)'; this.style.borderColor = 'rgba(255,255,255,0.55)'; };
+    btn.onmouseout  = function() { this.style.background = 'rgba(30,41,59,0.88)'; this.style.borderColor = 'rgba(255,255,255,0.28)'; };
     btn.innerHTML = '<i class="fa-solid fa-gear" style="margin-right:6px"></i>Settings';
     btn.onclick = openAdminSettings;
     logoutBtn.parentNode.insertBefore(btn, logoutBtn);
