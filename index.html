@@ -3218,6 +3218,9 @@ input:where([type='button'], [type='reset'], [type='submit']),
   
 
 
+  
+
+
 
   
   <header class="glass-dark sticky top-0 z-40 text-white shadow-xl">
@@ -6354,6 +6357,7 @@ document.addEventListener('click', function(e) {
 
 
 
+
 <!-- ISM UI Patches v4: dialog positions, top toasts, admin settings, union delete, class delete/edit, financial status fix, balance color/sign rules, market history -->
 <style id="ism-ui-patches-css">
 /* ── Strict Hidden Enforcement ── */
@@ -6847,12 +6851,18 @@ button i,
 }
 
 /* ── Confirm dialogs: full-screen centered dark backdrop ── */
-#app-dialog.app-dialog-center {
+#app-dialog.app-dialog-center:not(.hidden) {
+  display: flex !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
   background: rgba(8,14,34,0.88) !important;
   backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   pointer-events: auto !important;
   align-items: center !important;
   justify-content: center !important;
+  padding: 1.25rem !important;
 }
 #app-dialog.app-dialog-center .app-dialog-card {
   border-radius: 22px !important;
@@ -8949,30 +8959,49 @@ window.switchAuthRole = function(type) {
 // ── Stock Item Deletion Support ──
 window.deleteStockItem = function(id, name) {
   var label = name || id || 'this stock item';
-  if (!confirm('Are you sure you want to delete "' + label + '" from stock? This cannot be undone.')) {
-    return;
+  function doDelete() {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (typeof ismShowNotif === 'function') {
+          ismShowNotif(res.success ? 'Stock Deleted' : 'Error', res.message, res.success ? 'success' : 'danger');
+        }
+        if (res.success) {
+          if (typeof closeEditStockModal === 'function') closeEditStockModal();
+          if (typeof loadStockCache === 'function') loadStockCache();
+          if (typeof loadAdminStockTable === 'function') loadAdminStockTable();
+        }
+      })
+      .withFailureHandler(function(err) {
+        if (typeof ismShowNotif === 'function') {
+          ismShowNotif('Error', err.message || 'Failed to delete stock item', 'danger');
+        }
+      })
+      .deleteStockRecord(id, name);
   }
-  google.script.run
-    .withSuccessHandler(function(res) {
-      if (typeof ismShowNotif === 'function') {
-        ismShowNotif(res.success ? 'Stock Deleted' : 'Error', res.message, res.success ? 'success' : 'danger');
-      } else {
-        alert(res.message);
-      }
-      if (res.success) {
-        if (typeof closeEditStockModal === 'function') closeEditStockModal();
-        if (typeof loadStockCache === 'function') loadStockCache();
-        if (typeof loadAdminStockTable === 'function') loadAdminStockTable();
-      }
-    })
-    .withFailureHandler(function(err) {
-      if (typeof ismShowNotif === 'function') {
-        ismShowNotif('Error', err.message || 'Failed to delete stock item', 'danger');
-      } else {
-        alert(err.message || 'Failed to delete stock item');
-      }
-    })
-    .deleteStockRecord(id, name);
+
+  // Use app's built-in custom dialog modal at suitable area
+  var dialogFn = (typeof showAppDialog === 'function') ? showAppDialog : (typeof window.showAppDialog === 'function' ? window.showAppDialog : null);
+  if (dialogFn) {
+    dialogFn({
+      mode: 'confirm',
+      type: 'danger',
+      title: 'Delete Stock Item',
+      message: 'Are you sure you want to delete "' + label + '" from stock? This cannot be undone.',
+      okText: 'Delete',
+      cancelText: 'Cancel'
+    }).then(function(confirmed) {
+      if (confirmed) doDelete();
+    });
+  } else if (typeof appConfirm === 'function') {
+    appConfirm('Are you sure you want to delete "' + label + '" from stock? This cannot be undone.', {
+      title: 'Delete Stock Item',
+      okText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger'
+    }).then(function(confirmed) {
+      if (confirmed) doDelete();
+    });
+  }
 };
 
 // Also inject delete button into Edit Stock modal if not present
