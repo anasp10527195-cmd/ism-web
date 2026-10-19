@@ -1833,13 +1833,7 @@ input:where([type='button'], [type='reset'], [type='submit']),
 </style>
 
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0f172a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Ihsan Mart">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="format-detection" content="telephone=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IHSAN SUPER MARKET</title>
   
   
@@ -3049,20 +3043,20 @@ input:where([type='button'], [type='reset'], [type='submit']),
 
   
   <header class="glass-dark sticky top-0 z-40 text-white shadow-xl">
-    <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2 sm:gap-3 cursor-pointer select-none min-w-0" onclick="showView('view-landing')">
-        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-teal-500 flex items-center justify-center font-black text-base sm:text-xl text-white shadow-lg shrink-0">I</div>
-        <div class="min-w-0">
-          <h1 class="text-sm sm:text-xl font-black tracking-tight sm:tracking-wide text-teal-400 truncate">IHSAN SUPER MARKET</h1>
-          <p class="hidden sm:block text-xs text-slate-400">Campus Retail & Ledger System</p>
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="showView('view-landing')">
+        <div class="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center font-bold text-xl text-white shadow-lg">I</div>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide text-teal-400">IHSAN SUPER MARKET</h1>
+          <p class="text-xs text-slate-400">Campus Retail & Ledger System</p>
         </div>
       </div>
-      <div id="nav-actions" class="flex items-center gap-1.5 sm:gap-3 shrink-0">
-        <button onclick="openLiveStockModal()" class="px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl bg-teal-600/30 hover:bg-teal-600/50 text-teal-300 border border-teal-500/40 transition inline-flex items-center shrink-0">
-          <i class="fa-solid fa-boxes-stacked mr-1 sm:mr-1.5"></i> <span class="hidden sm:inline">Live </span>Stock
+      <div id="nav-actions" class="flex items-center gap-3">
+        <button onclick="openLiveStockModal()" class="px-4 py-2 text-sm font-semibold rounded-lg bg-teal-600/30 hover:bg-teal-600/50 text-teal-300 border border-teal-500/40 transition">
+          <i class="fa-solid fa-boxes-stacked mr-1.5"></i> Live Stock List
         </button>
-        <button id="logout-btn" onclick="logout()" class="hidden px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition inline-flex items-center shrink-0">
-          <i class="fa-solid fa-right-from-bracket mr-1 sm:mr-1.5"></i> <span class="hidden sm:inline">Sign </span>Out
+        <button id="logout-btn" onclick="logout()" class="hidden px-4 py-2 text-sm font-semibold rounded-lg bg-rose-600 hover:bg-rose-700 text-white transition">
+          <i class="fa-solid fa-right-from-bracket mr-1.5"></i> Sign Out
         </button>
       </div>
     </div>
@@ -3277,7 +3271,7 @@ input:where([type='button'], [type='reset'], [type='submit']),
           <i class="fa-solid fa-boxes-stacked mr-2"></i> Stock
         </button>
         <button onclick="switchAdminTab('bulk')" id="tab-btn-bulk" class="flex-1 py-3 font-bold rounded-xl text-slate-600 hover:bg-slate-100 transition">
-          <i class="fa-solid fa-file-import mr-2"></i> Bulk<span class="hidden sm:inline"> Upload & Templates</span>
+          <i class="fa-solid fa-file-import mr-2"></i> Bulk Upload & Templates
         </button>
         <button onclick="switchAdminTab('report')" id="tab-btn-report" class="flex-1 py-3 font-bold rounded-xl text-slate-600 hover:bg-slate-100 transition">
           <i class="fa-solid fa-chart-pie mr-2"></i> Report
@@ -6170,7 +6164,6 @@ document.addEventListener('click', function(e) {
 
 
 
-
 <!-- ISM UI Patches v4: dialog positions, top toasts, admin settings, union delete, class delete/edit, financial status fix, balance color/sign rules, market history -->
 <style id="ism-ui-patches-css">
 /* ── Confirm dialogs: full-screen centered dark backdrop ── */
@@ -6468,264 +6461,6 @@ header {
   align-items: center !important;
   justify-content: center !important;
 }
-
-/* ═══════════════════════════════════════════════════════════════════════
-   MOBILE & PWA OPTIMIZATION SUITE (Eye-Catching & Comfortable on Mobile)
-   ═══════════════════════════════════════════════════════════════════════ */
-
-/* 1. Safe area handling for modern edge-to-edge screens */
-body {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-header {
-  padding-top: env(safe-area-inset-top, 0px);
-}
-
-/* 2. Prevent iOS Safari auto-zoom on input focus by ensuring at least 16px */
-@media (max-width: 767px) {
-  input[type="text"]:not(.pur-qty):not(.pur-line-price),
-  input[type="number"]:not(.pur-qty):not(.pur-line-price),
-  input[type="password"],
-  input[type="search"],
-  input[type="date"],
-  select,
-  textarea {
-    font-size: 16px !important;
-  }
-}
-
-/* 3. Responsive Header Bar for Mobile */
-.header-settings-pill {
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 700;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.header-settings-pill:hover {
-  background: rgba(255, 255, 255, 0.22);
-}
-
-@media (max-width: 639px) {
-  header .max-w-7xl {
-    padding-left: 0.625rem !important;
-    padding-right: 0.625rem !important;
-    padding-top: 0.45rem !important;
-    padding-bottom: 0.45rem !important;
-  }
-  header h1 {
-    font-size: 0.925rem !important;
-    line-height: 1.15 !important;
-  }
-  header p {
-    display: none !important;
-  }
-  #nav-actions {
-    gap: 0.35rem !important;
-  }
-  #nav-actions button,
-  .header-settings-pill {
-    padding: 0.4rem 0.65rem !important;
-    font-size: 0.75rem !important;
-    border-radius: 0.6rem !important;
-    min-height: 34px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin-right: 0 !important;
-  }
-}
-
-/* 4. Sleek Horizontal Scrollable Admin Tab Bar on Mobile */
-@media (max-width: 767px) {
-  .admin-tabbar {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: none !important;
-    padding: 0.35rem !important;
-    gap: 0.35rem !important;
-    border-radius: 1rem !important;
-  }
-  .admin-tabbar::-webkit-scrollbar {
-    display: none !important;
-  }
-  .admin-tabbar button {
-    flex: 0 0 auto !important;
-    white-space: nowrap !important;
-    padding: 0.625rem 0.95rem !important;
-    font-size: 0.8125rem !important;
-    border-radius: 0.75rem !important;
-    min-height: 42px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-}
-
-/* 5. Horizontal Class Filter strip on Mobile */
-@media (max-width: 767px) {
-  #student-class-filters {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: none !important;
-    padding: 0.25rem 0.125rem !important;
-    gap: 0.35rem !important;
-  }
-  #student-class-filters::-webkit-scrollbar {
-    display: none !important;
-  }
-  #student-class-filters .class-filter {
-    flex: 0 0 auto !important;
-    white-space: nowrap !important;
-    padding: 0.4rem 0.75rem !important;
-    font-size: 0.75rem !important;
-    border-radius: 0.6rem !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  }
-}
-
-/* 6. Card paddings & visual breathing room on Mobile */
-@media (max-width: 639px) {
-  main {
-    padding-left: 0.625rem !important;
-    padding-right: 0.625rem !important;
-    padding-top: 0.75rem !important;
-    padding-bottom: 2rem !important;
-  }
-  .glass-card {
-    padding: 1.125rem !important;
-    border-radius: 1.125rem !important;
-  }
-  .portal-hero {
-    padding: 1.125rem !important;
-    border-radius: 1.125rem !important;
-  }
-  .portal-hero h2,
-  .portal-hero h3 {
-    font-size: 1.25rem !important;
-  }
-  .portal-chip {
-    font-size: 0.75rem !important;
-    padding: 0.3rem 0.65rem !important;
-  }
-}
-
-/* 7. Quick Options touch-friendly grid on Mobile */
-@media (max-width: 639px) {
-  .quick-option {
-    padding: 0.65rem 0.85rem !important;
-    gap: 0.65rem !important;
-    border-radius: 0.875rem !important;
-  }
-  .quick-icon {
-    width: 2.25rem !important;
-    height: 2.25rem !important;
-    font-size: 0.95rem !important;
-    border-radius: 0.625rem !important;
-  }
-}
-
-/* 8. Table touch scrolling & typography on Mobile */
-.overflow-x-auto {
-  -webkit-overflow-scrolling: touch !important;
-  scrollbar-width: thin !important;
-}
-
-@media (max-width: 639px) {
-  table th,
-  table td {
-    padding: 0.5rem 0.45rem !important;
-    font-size: 0.785rem !important;
-  }
-  table th {
-    font-size: 0.7rem !important;
-  }
-}
-
-/* 9. History Tab Mobile Optimizations */
-@media (max-width: 639px) {
-  .month-group {
-    padding: 0.75rem !important;
-    border-radius: 1rem !important;
-  }
-  .month-group > div:first-child {
-    padding: 0.625rem !important;
-  }
-  .day-group {
-    border-radius: 0.75rem !important;
-  }
-  .day-group > div:first-child {
-    padding: 0.5rem 0.65rem !important;
-  }
-  #hist-btn-bulk-delete {
-    width: 100% !important;
-    justify-content: center !important;
-    padding: 0.65rem 1rem !important;
-  }
-}
-
-/* 10. Modals & Dialogs on Mobile */
-@media (max-width: 639px) {
-  #app-dialog.app-dialog-center .app-dialog-card,
-  #modal-admin-settings > div,
-  #modal-class-batch-edit > div,
-  #modal-edit-stock > div,
-  #modal-live-stock > div,
-  #modal-edit-purchase > div,
-  #modal-edit-payment > div {
-    max-width: calc(100vw - 1.25rem) !important;
-    width: 100% !important;
-    padding: 1.15rem 1rem !important;
-    margin: 0.5rem auto !important;
-    border-radius: 1.25rem !important;
-    max-height: 92vh !important;
-  }
-}
-
-/* 11. Top notifications on Mobile */
-@media (max-width: 639px) {
-  #ism-top-notif {
-    top: 50px !important;
-    padding: 6px 12px 0 !important;
-  }
-  .ism-notif {
-    padding: 10px 14px !important;
-    font-size: 13px !important;
-    border-radius: 12px !important;
-  }
-  .ism-notif-icon {
-    font-size: 17px !important;
-  }
-}
-
-/* 12. Touch feedback & smoothness */
-button,
-a,
-input[type="button"],
-.quick-option,
-.class-filter {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-button:active,
-.quick-option:active {
-  transform: scale(0.97);
-}
 </style>
 
 <!-- Top notification container -->
@@ -6992,8 +6727,11 @@ async function saveAdminSettings(btn) {
     if (!logoutBtn) return;
     var btn = document.createElement('button');
     btn.id = 'admin-settings-btn';
-    btn.className = 'hidden header-settings-pill';
-    btn.innerHTML = '<i class="fa-solid fa-gear mr-1 sm:mr-1.5"></i><span class="hidden sm:inline">Settings</span><span class="inline sm:hidden">Set</span>';
+    btn.className = 'hidden';
+    btn.style.cssText = 'padding:7px 14px;font-size:13px;font-weight:700;border-radius:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:white;cursor:pointer;transition:background .2s;margin-right:6px';
+    btn.onmouseover = function() { this.style.background = 'rgba(255,255,255,0.22)'; };
+    btn.onmouseout  = function() { this.style.background = 'rgba(255,255,255,0.12)'; };
+    btn.innerHTML = '<i class="fa-solid fa-gear" style="margin-right:6px"></i>Settings';
     btn.onclick = openAdminSettings;
     logoutBtn.parentNode.insertBefore(btn, logoutBtn);
   }
