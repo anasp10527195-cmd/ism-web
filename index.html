@@ -3215,6 +3215,9 @@ input:where([type='button'], [type='reset'], [type='submit']),
   
 
 
+  
+
+
 
   
   <header class="glass-dark sticky top-0 z-40 text-white shadow-xl">
@@ -6350,8 +6353,24 @@ document.addEventListener('click', function(e) {
 
 
 
+
 <!-- ISM UI Patches v4: dialog positions, top toasts, admin settings, union delete, class delete/edit, financial status fix, balance color/sign rules, market history -->
 <style id="ism-ui-patches-css">
+/* ── Strict Hidden Enforcement ── */
+.hidden,
+[hidden],
+button.hidden,
+.button.hidden,
+[role="button"].hidden,
+input[type="button"].hidden,
+input[type="submit"].hidden,
+#logout-btn.hidden,
+#admin-settings-btn.hidden,
+header #logout-btn.hidden,
+header #admin-settings-btn.hidden {
+  display: none !important;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
    PREMIUM OPAQUE & HIGH-CONTRAST ACTION BUTTONS (Decreased Transparency)
    ═══════════════════════════════════════════════════════════════════════ */
@@ -6369,7 +6388,7 @@ input[type="submit"] {
   letter-spacing: 0.2px !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
   cursor: pointer !important;
-  display: inline-flex !important;
+  display: inline-flex;
   align-items: center !important;
   justify-content: center !important;
   gap: 8px !important;
@@ -6540,7 +6559,9 @@ header #nav-actions button:not([onclick*="openLiveStockModal"]):not(#logout-btn)
   box-shadow: 0 4px 14px rgba(255, 255, 255, 0.2) !important;
 }
 
-header #logout-btn {
+header #logout-btn.hidden { display: none !important; }
+header #admin-settings-btn.hidden { display: none !important; }
+header #logout-btn:not(.hidden) {
   background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
   border: 1.5px solid #f43f5e !important;
   color: #ffffff !important;
@@ -7544,68 +7565,131 @@ async function saveAdminSettings(btn) {
   }
 }
 
-// ── Admin Settings button in header ──
+// ── Header Auth Navigation Controller (Sign Out & Settings) ──
 (function() {
-  function addSettingsBtn() {
-    if (document.getElementById('admin-settings-btn')) return;
+  function updateAuthNav(activeView) {
+    if (!activeView) {
+      var adminDash = document.getElementById('view-admin-dashboard');
+      var stuDash = document.getElementById('view-student-dashboard');
+      if (adminDash && !adminDash.classList.contains('hidden')) {
+        activeView = 'view-admin-dashboard';
+      } else if (stuDash && !stuDash.classList.contains('hidden')) {
+        activeView = 'view-student-dashboard';
+      } else {
+        activeView = 'view-landing';
+      }
+    }
+
+    var logoutBtn = document.getElementById('logout-btn');
+    var settingsBtn = document.getElementById('admin-settings-btn');
+
+    if (activeView === 'view-admin-dashboard') {
+      // Admin signed in: show both Sign Out and Settings
+      if (logoutBtn) {
+        logoutBtn.classList.remove('hidden');
+        logoutBtn.style.setProperty('display', 'inline-flex', 'important');
+      }
+      if (settingsBtn) {
+        settingsBtn.classList.remove('hidden');
+        settingsBtn.style.setProperty('display', 'inline-flex', 'important');
+      }
+    } else if (activeView === 'view-student-dashboard') {
+      // Student signed in: show Sign Out ONLY, hide Settings
+      if (logoutBtn) {
+        logoutBtn.classList.remove('hidden');
+        logoutBtn.style.setProperty('display', 'inline-flex', 'important');
+      }
+      if (settingsBtn) {
+        settingsBtn.classList.add('hidden');
+        settingsBtn.style.setProperty('display', 'none', 'important');
+      }
+    } else {
+      // Not signed in (landing page or auth login cards): HIDE BOTH
+      if (logoutBtn) {
+        logoutBtn.classList.add('hidden');
+        logoutBtn.style.setProperty('display', 'none', 'important');
+      }
+      if (settingsBtn) {
+        settingsBtn.classList.add('hidden');
+        settingsBtn.style.setProperty('display', 'none', 'important');
+      }
+    }
+  }
+
+  window.ismUpdateAuthNav = updateAuthNav;
+
+  function ensureSettingsBtn() {
     var logoutBtn = document.getElementById('logout-btn');
     if (!logoutBtn) return;
-    var btn = document.createElement('button');
-    btn.id = 'admin-settings-btn';
-    btn.className = 'hidden';
-    btn.style.cssText = 'padding:7px 14px;font-size:13px;font-weight:700;border-radius:10px;background:rgba(30,41,59,0.88);border:1.5px solid rgba(255,255,255,0.28);color:white;cursor:pointer;transition:all .2s;margin-right:6px';
-    btn.onmouseover = function() { this.style.background = 'rgba(51,65,85,0.95)'; this.style.borderColor = 'rgba(255,255,255,0.55)'; };
-    btn.onmouseout  = function() { this.style.background = 'rgba(30,41,59,0.88)'; this.style.borderColor = 'rgba(255,255,255,0.28)'; };
-    btn.innerHTML = '<i class="fa-solid fa-gear" style="margin-right:6px"></i>Settings';
-    btn.onclick = openAdminSettings;
-    logoutBtn.parentNode.insertBefore(btn, logoutBtn);
+    var btn = document.getElementById('admin-settings-btn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'admin-settings-btn';
+      btn.className = 'hidden';
+      btn.style.cssText = 'padding:7px 14px;font-size:13px;font-weight:700;border-radius:10px;background:rgba(30,41,59,0.88);border:1.5px solid rgba(255,255,255,0.28);color:white;cursor:pointer;transition:all .2s;margin-right:6px;display:none !important';
+      btn.onmouseover = function() { this.style.background = 'rgba(51,65,85,0.95)'; this.style.borderColor = 'rgba(255,255,255,0.55)'; };
+      btn.onmouseout  = function() { this.style.background = 'rgba(30,41,59,0.88)'; this.style.borderColor = 'rgba(255,255,255,0.28)'; };
+      btn.innerHTML = '<i class="fa-solid fa-gear" style="margin-right:6px"></i>Settings';
+      btn.onclick = openAdminSettings;
+      logoutBtn.parentNode.insertBefore(btn, logoutBtn);
+    }
+    updateAuthNav();
   }
 
-  addSettingsBtn();
-  setTimeout(addSettingsBtn, 800);
+  ensureSettingsBtn();
+  setTimeout(ensureSettingsBtn, 200);
+  setTimeout(ensureSettingsBtn, 600);
+  setTimeout(ensureSettingsBtn, 1200);
 
+  // Hook showView
+  var origShowView = window.showView;
+  window.showView = function(viewId) {
+    if (typeof origShowView === 'function') {
+      origShowView.apply(this, arguments);
+    }
+    updateAuthNav(viewId);
+  };
+
+  // Hook showAdminDashboard
   var origShowAdmin = window.showAdminDashboard;
-  if (origShowAdmin) {
-    window.showAdminDashboard = function() {
+  window.showAdminDashboard = function() {
+    if (typeof origShowAdmin === 'function') {
       origShowAdmin.apply(this, arguments);
-      var b = document.getElementById('admin-settings-btn');
-      if (b) b.classList.remove('hidden');
-    };
-  }
-
-  
-  // Hide Settings when student logs in
-  function patchStudentViewSettings() {
-    var origRS = window.renderStudentDashboard;
-    if (origRS && !origRS._settingsBtnPatched) {
-      window.renderStudentDashboard = function() {
-        origRS.apply(this, arguments);
-        var b = document.getElementById('admin-settings-btn');
-        if (b) b.classList.add('hidden');
-      };
-      window.renderStudentDashboard._settingsBtnPatched = true;
     }
-    var origSS = window.showStudentDashboard;
-    if (origSS && !origSS._settingsBtnPatched) {
-      window.showStudentDashboard = function() {
-        origSS.apply(this, arguments);
-        var b = document.getElementById('admin-settings-btn');
-        if (b) b.classList.add('hidden');
-      };
-      window.showStudentDashboard._settingsBtnPatched = true;
-    }
-  }
-  patchStudentViewSettings();
-  setTimeout(patchStudentViewSettings, 300);
-  setTimeout(patchStudentViewSettings, 900);
+    updateAuthNav('view-admin-dashboard');
+  };
 
+  // Hook renderStudentDashboard
+  var origRS = window.renderStudentDashboard;
+  window.renderStudentDashboard = function() {
+    if (typeof origRS === 'function') {
+      origRS.apply(this, arguments);
+    }
+    updateAuthNav('view-student-dashboard');
+  };
+
+  // Hook showStudentDashboard
+  var origSS = window.showStudentDashboard;
+  window.showStudentDashboard = function() {
+    if (typeof origSS === 'function') {
+      origSS.apply(this, arguments);
+    }
+    updateAuthNav('view-student-dashboard');
+  };
+
+  // Hook logout
   var origLogout = window.logout;
-  if (origLogout) {
-    window.logout = function() {
+  window.logout = function() {
+    if (typeof origLogout === 'function') {
       origLogout.apply(this, arguments);
-      var b = document.getElementById('admin-settings-btn');
-      if (b) b.classList.add('hidden');
-    };
+    }
+    updateAuthNav('view-landing');
+  };
+
+  // Initial execution to ensure Sign Out and Settings start hidden
+  updateAuthNav();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { updateAuthNav(); });
   }
 })();
 
