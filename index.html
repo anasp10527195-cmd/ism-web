@@ -3212,6 +3212,9 @@ input:where([type='button'], [type='reset'], [type='submit']),
   
 
 
+  
+
+
 
   
   <header class="glass-dark sticky top-0 z-40 text-white shadow-xl">
@@ -6346,6 +6349,7 @@ document.addEventListener('click', function(e) {
 
 
 
+
 <!-- ISM UI Patches v4: dialog positions, top toasts, admin settings, union delete, class delete/edit, financial status fix, balance color/sign rules, market history -->
 <style id="ism-ui-patches-css">
 /* ═══════════════════════════════════════════════════════════════════════
@@ -7568,6 +7572,32 @@ async function saveAdminSettings(btn) {
       if (b) b.classList.remove('hidden');
     };
   }
+
+  
+  // Hide Settings when student logs in
+  function patchStudentViewSettings() {
+    var origRS = window.renderStudentDashboard;
+    if (origRS && !origRS._settingsBtnPatched) {
+      window.renderStudentDashboard = function() {
+        origRS.apply(this, arguments);
+        var b = document.getElementById('admin-settings-btn');
+        if (b) b.classList.add('hidden');
+      };
+      window.renderStudentDashboard._settingsBtnPatched = true;
+    }
+    var origSS = window.showStudentDashboard;
+    if (origSS && !origSS._settingsBtnPatched) {
+      window.showStudentDashboard = function() {
+        origSS.apply(this, arguments);
+        var b = document.getElementById('admin-settings-btn');
+        if (b) b.classList.add('hidden');
+      };
+      window.showStudentDashboard._settingsBtnPatched = true;
+    }
+  }
+  patchStudentViewSettings();
+  setTimeout(patchStudentViewSettings, 300);
+  setTimeout(patchStudentViewSettings, 900);
 
   var origLogout = window.logout;
   if (origLogout) {
