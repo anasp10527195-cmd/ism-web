@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <style id="static-tailwind">
@@ -1837,6 +1837,10 @@ input:where([type='button'], [type='reset'], [type='submit']),
   <title>IHSAN SUPER MARKET</title>
   <link rel="icon" type="image/jpeg" href="logo.jpg">
   <link rel="apple-touch-icon" href="logo.jpg">
+  <meta name="theme-color" content="#059669">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
   
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -3042,6 +3046,140 @@ input:where([type='button'], [type='reset'], [type='submit']),
 </style>
 </head>
 <body class="min-h-screen text-slate-800 antialiased flex flex-col">
+  <!-- ISM Mobile Opening Splash Screen: Green Shopping Trolley with ISM Billboard passing left-to-right -->
+  <div id="ism-splash-screen" class="ism-splash-screen" onclick="dismissIsmSplash(true)">
+    <div class="ism-splash-brand">
+      <div class="ism-splash-badge">IHSAN SUPER MARKET</div>
+      <div class="ism-splash-sub">Campus Retail &amp; Ledger System</div>
+    </div>
+    <div class="ism-floor-line"></div>
+    <div class="ism-floor-glow"></div>
+    <div class="ism-trolley-runner">
+      <div class="ism-trolley-bob">
+        <svg viewBox="0 0 300 240" width="290" height="230" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <defs>
+            <filter id="ism-shadow-blur" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3"/>
+            </filter>
+            <linearGradient id="ism-trolley-green" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#34d399"/>
+              <stop offset="100%" stop-color="#059669"/>
+            </linearGradient>
+            <linearGradient id="ism-panel-bg" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#064e3b"/>
+              <stop offset="100%" stop-color="#022c22"/>
+            </linearGradient>
+            <clipPath id="ism-panel-clip">
+              <rect x="94" y="86" width="142" height="70" rx="10"/>
+            </clipPath>
+          </defs>
+
+          <!-- Ground Shadow beneath wheels -->
+          <ellipse cx="152" cy="226" rx="100" ry="6" fill="#000" opacity="0.45" filter="url(#ism-shadow-blur)"/>
+
+          <!-- Speed / Wind Lines behind cart -->
+          <line x1="5" y1="92" x2="42" y2="92" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" opacity="0.4" stroke-dasharray="8 6"/>
+          <line x1="-12" y1="120" x2="38" y2="120" stroke="#34d399" stroke-width="2" stroke-linecap="round" opacity="0.3" stroke-dasharray="10 8"/>
+          <line x1="12" y1="150" x2="52" y2="150" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" opacity="0.45" stroke-dasharray="6 6"/>
+          <line x1="-5" y1="180" x2="40" y2="180" stroke="#34d399" stroke-width="2" stroke-linecap="round" opacity="0.3" stroke-dasharray="12 6"/>
+
+          <!-- Undercarriage Chassis -->
+          <path d="M 74 195 L 85 195 L 140 195 L 222 195 L 232 190" stroke="#047857" stroke-width="5" stroke-linecap="round"/>
+          <line x1="95" y1="186" x2="212" y2="186" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="115" y1="186" x2="115" y2="195" stroke="#059669" stroke-width="2"/>
+          <line x1="140" y1="186" x2="140" y2="195" stroke="#059669" stroke-width="2"/>
+          <line x1="165" y1="186" x2="165" y2="195" stroke="#059669" stroke-width="2"/>
+          <line x1="190" y1="186" x2="190" y2="195" stroke="#059669" stroke-width="2"/>
+
+          <!-- Frame Support Struts -->
+          <path d="M 78 195 L 68 118" stroke="#059669" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="M 226 195 L 205 152" stroke="#059669" stroke-width="4" stroke-linecap="round"/>
+          <path d="M 78 195 L 138 155" stroke="#047857" stroke-width="3.5" stroke-linecap="round"/>
+
+          <!-- Wire Basket Grid Background -->
+          <line x1="72" y1="96" x2="248" y2="110" stroke="#34d399" stroke-width="1.8" opacity="0.45"/>
+          <line x1="76" y1="112" x2="245" y2="124" stroke="#34d399" stroke-width="1.8" opacity="0.45"/>
+          <line x1="81" y1="129" x2="242" y2="138" stroke="#34d399" stroke-width="1.8" opacity="0.45"/>
+          <line x1="86" y1="147" x2="239" y2="148" stroke="#34d399" stroke-width="1.8" opacity="0.45"/>
+
+          <!-- Vertical Wires -->
+          <line x1="88" y1="84" x2="98" y2="165" stroke="#34d399" stroke-width="1.5" opacity="0.4"/>
+          <line x1="106" y1="86" x2="114" y2="163" stroke="#34d399" stroke-width="1.5" opacity="0.4"/>
+          <line x1="124" y1="88" x2="130" y2="161" stroke="#34d399" stroke-width="1.5" opacity="0.4"/>
+          <line x1="142" y1="89" x2="146" y2="159" stroke="#34d399" stroke-width="1.5" opacity="0.4"/>
+          <line x1="160" y1="91" x2="162" y2="157" stroke="#34d399" stroke-width="1.5" opacity="0.4"/>
+          <line x1="178" y1="92" x2="178" y2="155" stroke="#34d399" stroke-width="1.5" opacity="0.4"/>
+          <line x1="196" y1="94" x2="194" y2="154" stroke="#34d399" stroke-width="1.5" opacity="0.4"/>
+          <line x1="214" y1="95" x2="210" y2="152" stroke="#34d399" stroke-width="1.5" opacity="0.4"/>
+          <line x1="232" y1="97" x2="226" y2="150" stroke="#34d399" stroke-width="1.5" opacity="0.4"/>
+
+          <!-- Advertising Board Mounted on Basket (Like Image 3) -->
+          <rect x="94" y="86" width="142" height="70" rx="10" fill="url(#ism-panel-bg)" stroke="#10b981" stroke-width="3" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.4))"/>
+          <!-- Metallic Mounting Clips (like Image 3) -->
+          <rect x="110" y="83" width="8" height="6" rx="2" fill="#94a3b8"/>
+          <rect x="200" y="83" width="8" height="6" rx="2" fill="#94a3b8"/>
+          <rect x="110" y="153" width="8" height="6" rx="2" fill="#94a3b8"/>
+          <rect x="200" y="153" width="8" height="6" rx="2" fill="#94a3b8"/>
+
+          <g clip-path="url(#ism-panel-clip)">
+            <!-- Logo artwork on the board (Second Image) -->
+            <image href="logo.jpg" xlink:href="logo.jpg" x="98" y="89" width="64" height="64" preserveAspectRatio="xMidYMid meet"/>
+            <!-- Brand text on the billboard -->
+            <text x="168" y="112" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="900" font-size="12.5" fill="#fef08a" letter-spacing="1.5">IHSAN</text>
+            <text x="168" y="127" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="800" font-size="10" fill="#34d399" letter-spacing="0.8">SUPER</text>
+            <text x="168" y="141" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="800" font-size="10" fill="#ffffff" letter-spacing="0.8">MARKET</text>
+          </g>
+
+          <!-- Basket Perimeter Frame -->
+          <path d="M 68 76 L 254 96" stroke="url(#ism-trolley-green)" stroke-width="6.5" stroke-linecap="round"/>
+          <path d="M 254 96 L 240 152" stroke="#059669" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="M 240 152 L 92 166" stroke="#059669" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="M 92 166 L 68 76" stroke="#059669" stroke-width="4.5" stroke-linecap="round"/>
+
+          <!-- Green Plastic Corner Bumpers (like Image 3) -->
+          <rect x="246" y="91" width="12" height="15" rx="4" fill="#10b981" stroke="#34d399" stroke-width="1.5"/>
+          <rect x="64" y="71" width="12" height="15" rx="4" fill="#10b981" stroke="#34d399" stroke-width="1.5"/>
+
+          <!-- Rear Handle Assembly -->
+          <path d="M 68 82 L 38 54" stroke="#059669" stroke-width="4.5" stroke-linecap="round"/>
+          <!-- Green Handle Bar Grip -->
+          <rect x="26" y="44" width="20" height="15" rx="5" fill="#10b981" stroke="#34d399" stroke-width="1.5" transform="rotate(-22 36 51)"/>
+          <!-- Grip Ridges -->
+          <line x1="33" y1="46" x2="33" y2="58" stroke="#047857" stroke-width="1.5" transform="rotate(-22 36 51)"/>
+          <line x1="38" y1="46" x2="38" y2="58" stroke="#047857" stroke-width="1.5" transform="rotate(-22 36 51)"/>
+
+          <!-- Castor Forks -->
+          <path d="M 78 195 L 72 208 L 78 212" stroke="#059669" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M 228 195 L 222 208 L 228 212" stroke="#059669" stroke-width="3.5" stroke-linecap="round"/>
+
+          <!-- Rear Wheel (cx=78, cy=212) -->
+          <circle cx="78" cy="212" r="14.5" fill="#1e293b"/>
+          <circle cx="78" cy="212" r="10.5" fill="#10b981"/>
+          <g class="ism-wheel-spin-rear">
+            <line x1="70" y1="212" x2="86" y2="212" stroke="#047857" stroke-width="2.5"/>
+            <line x1="78" y1="204" x2="78" y2="220" stroke="#047857" stroke-width="2.5"/>
+            <line x1="72.3" y1="206.3" x2="83.7" y2="217.7" stroke="#047857" stroke-width="1.8"/>
+            <line x1="72.3" y1="217.7" x2="83.7" y2="206.3" stroke="#047857" stroke-width="1.8"/>
+          </g>
+          <circle cx="78" cy="212" r="4.5" fill="#f8fafc" stroke="#64748b" stroke-width="1"/>
+
+          <!-- Front Wheel (cx=228, cy=212) -->
+          <circle cx="228" cy="212" r="14.5" fill="#1e293b"/>
+          <circle cx="228" cy="212" r="10.5" fill="#10b981"/>
+          <g class="ism-wheel-spin-front">
+            <line x1="220" y1="212" x2="236" y2="212" stroke="#047857" stroke-width="2.5"/>
+            <line x1="228" y1="204" x2="228" y2="220" stroke="#047857" stroke-width="2.5"/>
+            <line x1="222.3" y1="206.3" x2="233.7" y2="217.7" stroke="#047857" stroke-width="1.8"/>
+            <line x1="222.3" y1="217.7" x2="233.7" y2="206.3" stroke="#047857" stroke-width="1.8"/>
+          </g>
+          <circle cx="228" cy="212" r="4.5" fill="#f8fafc" stroke="#64748b" stroke-width="1"/>
+        </svg>
+      </div>
+    </div>
+    <div class="ism-splash-hint">Tap anywhere to enter</div>
+  </div>
+
+
 
   
   <header class="glass-dark sticky top-0 z-40 text-white shadow-xl">
@@ -6166,6 +6304,7 @@ document.addEventListener('click', function(e) {
 
 
 
+
 <!-- ISM UI Patches v4: dialog positions, top toasts, admin settings, union delete, class delete/edit, financial status fix, balance color/sign rules, market history -->
 <style id="ism-ui-patches-css">
 /* ── Confirm dialogs: full-screen centered dark backdrop ── */
@@ -6231,6 +6370,172 @@ document.addEventListener('click', function(e) {
 /* ── Modals z-index ── */
 #modal-admin-settings { z-index: 450; }
 #modal-class-batch-edit { z-index: 440; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ISM OPENING SPLASH SCREEN: Green Shopping Trolley with ISM Billboard
+   ═══════════════════════════════════════════════════════════════════════ */
+#ism-splash-screen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  background: radial-gradient(circle at 50% 48%, #064e3b 0%, #022c22 65%, #011a14 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  cursor: pointer;
+  will-change: opacity, transform;
+}
+
+.ism-splash-brand {
+  position: absolute;
+  top: 22%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  pointer-events: none;
+  animation: ismSplashBrandIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes ismSplashBrandIn {
+  from { opacity: 0; transform: translateY(-16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ism-splash-badge {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 3.5px;
+  color: #34d399;
+  text-shadow: 0 0 24px rgba(52, 211, 153, 0.55), 0 2px 4px rgba(0,0,0,0.5);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.ism-splash-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #a7f3d0;
+  opacity: 0.85;
+  text-transform: uppercase;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Floor Track & Laser Glow */
+.ism-floor-line {
+  position: absolute;
+  top: 60%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.25) 15%, rgba(52, 211, 153, 0.95) 50%, rgba(16, 185, 129, 0.25) 85%, transparent 100%);
+  box-shadow: 0 0 16px rgba(52, 211, 153, 0.6);
+  pointer-events: none;
+}
+
+.ism-floor-glow {
+  position: absolute;
+  top: 60%;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Trolley Mover - glides left to right */
+.ism-trolley-runner {
+  position: absolute;
+  top: calc(60% - 212px);
+  left: 0;
+  width: 290px;
+  height: 240px;
+  pointer-events: none;
+  animation: ismTrolleyPass 2.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform;
+}
+
+@keyframes ismTrolleyPass {
+  0% {
+    transform: translateX(-350px);
+  }
+  100% {
+    transform: translateX(calc(100vw + 100px));
+  }
+}
+
+.ism-trolley-bob {
+  width: 100%;
+  height: 100%;
+  animation: ismTrolleyBob 0.14s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes ismTrolleyBob {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-2.5px); }
+}
+
+.ism-wheel-spin-rear {
+  transform-origin: 78px 212px;
+  animation: ismWheelRotate 0.45s linear infinite;
+}
+
+.ism-wheel-spin-front {
+  transform-origin: 228px 212px;
+  animation: ismWheelRotate 0.45s linear infinite;
+}
+
+@keyframes ismWheelRotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.ism-splash-hint {
+  position: absolute;
+  bottom: 24px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(167, 243, 208, 0.6);
+  letter-spacing: 1px;
+  pointer-events: none;
+  text-transform: uppercase;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Responsive Scaling for Mobile Screens */
+@media (max-width: 640px) {
+  .ism-splash-brand {
+    top: 18%;
+  }
+  .ism-splash-badge {
+    font-size: 21px;
+    letter-spacing: 2.5px;
+  }
+  .ism-splash-sub {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+  }
+  .ism-floor-line, .ism-floor-glow {
+    top: 58%;
+  }
+  .ism-trolley-runner {
+    top: calc(58% - 176px);
+    width: 240px;
+    height: 198px;
+  }
+  .ism-trolley-runner svg {
+    width: 240px;
+    height: 198px;
+  }
+}
 
 /* ═══════════════════════════════════════════════════════════════════════
    AESTHETIC ANIMATION SUITE (Apple / Linear Inspired)
@@ -7919,12 +8224,57 @@ window.exportHistoryPDF = function() {
   }
 })();
 
+// ── ISM Mobile Opening Splash Screen Controller ──
+window.dismissIsmSplash = function(immediate) {
+  var splash = document.getElementById('ism-splash-screen');
+  if (!splash || splash.dataset.dismissed) return;
+  splash.dataset.dismissed = 'true';
+  splash.style.pointerEvents = 'none';
+  if (immediate) {
+    splash.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
+    splash.style.opacity = '0';
+    splash.style.transform = 'scale(1.02)';
+  } else {
+    splash.style.transition = 'opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1), transform 0.55s ease';
+    splash.style.opacity = '0';
+    splash.style.transform = 'scale(1.02)';
+  }
+  setTimeout(function() {
+    if (splash) {
+      splash.style.display = 'none';
+    }
+  }, immediate ? 240 : 600);
+};
+
+function initIsmSplash() {
+  var splash = document.getElementById('ism-splash-screen');
+  if (!splash) return;
+  if (splash.dataset.initialized) return;
+  splash.dataset.initialized = 'true';
+
+  // Smooth auto-dismiss as the trolley finishes passing out to the right (2.2s)
+  setTimeout(function() {
+    window.dismissIsmSplash(false);
+  }, 2200);
+
+  // Hard safety fallback dismiss at 2.8s
+  setTimeout(function() {
+    window.dismissIsmSplash(true);
+  }, 2800);
+}
+
+// Run immediately in case DOM is already ready
+initIsmSplash();
+
 // ── Initializations ──
 (function() {
   function initAll() {
     injectAddStudentForm();
     injectHistoryTab();
     updateClassActionsBar();
+
+    // Splash screen lifecycle
+    initIsmSplash();
 
     // Trigger initial landing page animation
     var landing = document.getElementById('view-landing');
@@ -7950,6 +8300,5 @@ window.exportHistoryPDF = function() {
   }
 })();
 </script>
-
 </body>
 </html>

@@ -1,0 +1,19 @@
+{
+  "name": "Ihsan Super Market",
+  "short_name": "ISM",
+  "description": "Campus Retail & Ledger System",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#022c22",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "logo.jpg",
+      "sizes": "192x192 512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
