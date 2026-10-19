@@ -1835,8 +1835,10 @@ input:where([type='button'], [type='reset'], [type='submit']),
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IHSAN SUPER MARKET</title>
-  <link rel="icon" type="image/jpeg" href="logo.jpg">
-  <link rel="apple-touch-icon" href="logo.jpg">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <meta name="theme-color" content="#059669">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -3180,6 +3182,9 @@ input:where([type='button'], [type='reset'], [type='submit']),
   </div>
 
 
+  
+
+
 
   
   <header class="glass-dark sticky top-0 z-40 text-white shadow-xl">
@@ -3208,6 +3213,7 @@ input:where([type='button'], [type='reset'], [type='submit']),
     
     <div id="view-landing" class="view-transition text-center py-12">
       <div class="glass-card max-w-3xl mx-auto rounded-3xl p-8 md:p-12 shadow-2xl">
+        <img src="icon-192.png" alt="ISM Landing Logo" class="w-20 h-20 mx-auto mb-4 rounded-2xl shadow-xl border-2 border-teal-500/30 object-cover">
         <span class="inline-block px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-teal-700 bg-teal-100 rounded-full mb-4">
           Welcome to Campus Mart
         </span>
@@ -3241,6 +3247,7 @@ input:where([type='button'], [type='reset'], [type='submit']),
         
         <div id="auth-student-form" class="space-y-4">
           <div class="text-center">
+            <img src="icon-192.png" alt="ISM Student Auth Logo" class="w-16 h-16 mx-auto mb-3 rounded-2xl shadow-lg border border-teal-500/30 object-cover">
             <h3 class="text-2xl font-bold text-slate-900">Student Sign In</h3>
             <p class="text-xs text-slate-500">Enter your Admission Number to continue</p>
           </div>
@@ -3258,6 +3265,7 @@ input:where([type='button'], [type='reset'], [type='submit']),
         
         <div id="auth-admin-form" class="space-y-4 hidden">
           <div class="text-center">
+            <img src="icon-192.png" alt="ISM Admin Auth Logo" class="w-16 h-16 mx-auto mb-3 rounded-2xl shadow-lg border border-slate-700/50 object-cover">
             <h3 class="text-2xl font-bold text-slate-900">Admin Sign In</h3>
             <p class="text-xs text-slate-500">Authorized personnel only</p>
           </div>
@@ -6305,6 +6313,7 @@ document.addEventListener('click', function(e) {
 
 
 
+
 <!-- ISM UI Patches v4: dialog positions, top toasts, admin settings, union delete, class delete/edit, financial status fix, balance color/sign rules, market history -->
 <style id="ism-ui-patches-css">
 /* ── Confirm dialogs: full-screen centered dark backdrop ── */
@@ -6458,7 +6467,7 @@ document.addEventListener('click', function(e) {
   width: 290px;
   height: 240px;
   pointer-events: none;
-  animation: ismTrolleyPass 2.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: ismTrolleyPass 3.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   will-change: transform;
 }
 
@@ -8252,15 +8261,15 @@ function initIsmSplash() {
   if (splash.dataset.initialized) return;
   splash.dataset.initialized = 'true';
 
-  // Smooth auto-dismiss as the trolley finishes passing out to the right (2.2s)
+  // Smooth auto-dismiss as the trolley finishes passing out to the right (3.0s)
   setTimeout(function() {
     window.dismissIsmSplash(false);
-  }, 2200);
+  }, 2950);
 
-  // Hard safety fallback dismiss at 2.8s
+  // Hard safety fallback dismiss at 3.6s
   setTimeout(function() {
     window.dismissIsmSplash(true);
-  }, 2800);
+  }, 3600);
 }
 
 // Run immediately in case DOM is already ready
