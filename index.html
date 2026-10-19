@@ -2027,6 +2027,18 @@ input:where([type='button'], [type='reset'], [type='submit']),
       return { success: true, message: 'Stock record updated successfully.' };
     },
 
+    async deleteStockRecord(id, name) {
+      let query = '';
+      if (id && String(id).trim() && String(id).trim() !== 'null' && !String(id).startsWith('ROW:')) {
+        query = `Stock?ID=eq.${encodeURIComponent(String(id).trim())}`;
+      } else if (name && String(name).trim()) {
+        query = `Stock?Product=eq.${encodeURIComponent(String(name).trim())}`;
+      }
+      if (!query) return { success: false, message: 'Stock identifier required to delete.' };
+      await api(query, { method: 'DELETE' });
+      return { success: true, message: 'Stock item deleted successfully.' };
+    },
+
     async getAllUnions() {
       const rows = await api('unions?select=*&order=Class.asc') || [];
       return rows.map(u => ({
@@ -3180,6 +3192,15 @@ input:where([type='button'], [type='reset'], [type='submit']),
     </div>
     <div class="ism-splash-hint">Tap anywhere to enter</div>
   </div>
+
+
+  
+
+
+  
+
+
+  
 
 
   
@@ -6314,6 +6335,9 @@ document.addEventListener('click', function(e) {
 
 
 
+
+
+
 <!-- ISM UI Patches v4: dialog positions, top toasts, admin settings, union delete, class delete/edit, financial status fix, balance color/sign rules, market history -->
 <style id="ism-ui-patches-css">
 /* ── Confirm dialogs: full-screen centered dark backdrop ── */
@@ -6467,7 +6491,7 @@ document.addEventListener('click', function(e) {
   width: 290px;
   height: 240px;
   pointer-events: none;
-  animation: ismTrolleyPass 3.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: ismTrolleyPass 6.0s cubic-bezier(0.22, 0.9, 0.35, 1) forwards;
   will-change: transform;
 }
 
@@ -8239,12 +8263,26 @@ window.dismissIsmSplash = function(immediate) {
   if (!splash || splash.dataset.dismissed) return;
   splash.dataset.dismissed = 'true';
   splash.style.pointerEvents = 'none';
+
+  // "dont show that page but should move to another"
+  // Move directly to the Sign In card (or dashboard if session exists)
+  try {
+    var savedSession = localStorage.getItem('ism_saved_session');
+    if (savedSession === 'admin' && typeof showView === 'function') {
+      showView('view-admin-dashboard');
+    } else if (savedSession === 'student' && typeof showView === 'function') {
+      showView('view-student-dashboard');
+    } else if (typeof showAuthCard === 'function') {
+      showAuthCard('student');
+    }
+  } catch(e) {}
+
   if (immediate) {
     splash.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
     splash.style.opacity = '0';
     splash.style.transform = 'scale(1.02)';
   } else {
-    splash.style.transition = 'opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1), transform 0.55s ease';
+    splash.style.transition = 'opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s ease';
     splash.style.opacity = '0';
     splash.style.transform = 'scale(1.02)';
   }
@@ -8252,7 +8290,7 @@ window.dismissIsmSplash = function(immediate) {
     if (splash) {
       splash.style.display = 'none';
     }
-  }, immediate ? 240 : 600);
+  }, immediate ? 240 : 650);
 };
 
 function initIsmSplash() {
@@ -8261,19 +8299,127 @@ function initIsmSplash() {
   if (splash.dataset.initialized) return;
   splash.dataset.initialized = 'true';
 
-  // Smooth auto-dismiss as the trolley finishes passing out to the right (3.0s)
+  // Smooth auto-dismiss as the trolley finishes passing out to the right (6.0s)
   setTimeout(function() {
     window.dismissIsmSplash(false);
-  }, 2950);
+  }, 5900);
 
-  // Hard safety fallback dismiss at 3.6s
+  // Hard safety fallback dismiss at 6.8s
   setTimeout(function() {
     window.dismissIsmSplash(true);
-  }, 3600);
+  }, 6800);
 }
 
 // Run immediately in case DOM is already ready
 initIsmSplash();
+
+// ── Auth Role Switcher Tabs on Sign In Card ──
+function injectAuthTabs() {
+  var authCard = document.querySelector('#view-auth .glass-card');
+  if (!authCard || document.getElementById('auth-role-tabs')) return;
+
+  var tabsHtml = 
+    '<div id="auth-role-tabs" class="flex items-center justify-center p-1 bg-slate-100/80 backdrop-blur-sm rounded-xl mb-5 border border-slate-200/60 shadow-inner">' +
+      '<button type="button" id="auth-tab-student" onclick="switchAuthRole(\'student\')" class="flex-1 py-2.5 text-xs font-bold rounded-lg transition text-white bg-teal-600 shadow-md">' +
+        '<i class="fa-solid fa-user-graduate mr-1.5"></i>Student Sign In' +
+      '</button>' +
+      '<button type="button" id="auth-tab-admin" onclick="switchAuthRole(\'admin\')" class="flex-1 py-2.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900">' +
+        '<i class="fa-solid fa-user-gear mr-1.5"></i>Admin Sign In' +
+      '</button>' +
+    '</div>';
+  
+  var studentForm = document.getElementById('auth-student-form');
+  if (studentForm) {
+    studentForm.insertAdjacentHTML('beforebegin', tabsHtml);
+  }
+}
+
+window.switchAuthRole = function(type) {
+  if (typeof showAuthCard === 'function') {
+    showAuthCard(type);
+  }
+  var tabStu = document.getElementById('auth-tab-student');
+  var tabAdm = document.getElementById('auth-tab-admin');
+  if (tabStu && tabAdm) {
+    if (type === 'student') {
+      tabStu.className = 'flex-1 py-2.5 text-xs font-bold rounded-lg transition text-white bg-teal-600 shadow-md';
+      tabAdm.className = 'flex-1 py-2.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900';
+    } else {
+      tabAdm.className = 'flex-1 py-2.5 text-xs font-bold rounded-lg transition text-white bg-slate-800 shadow-md';
+      tabStu.className = 'flex-1 py-2.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900';
+    }
+  }
+};
+
+// ── Stock Item Deletion Support ──
+window.deleteStockItem = function(id, name) {
+  var label = name || id || 'this stock item';
+  if (!confirm('Are you sure you want to delete "' + label + '" from stock? This cannot be undone.')) {
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (typeof ismShowNotif === 'function') {
+        ismShowNotif(res.success ? 'Stock Deleted' : 'Error', res.message, res.success ? 'success' : 'danger');
+      } else {
+        alert(res.message);
+      }
+      if (res.success) {
+        if (typeof closeEditStockModal === 'function') closeEditStockModal();
+        if (typeof loadStockCache === 'function') loadStockCache();
+        if (typeof loadAdminStockTable === 'function') loadAdminStockTable();
+      }
+    })
+    .withFailureHandler(function(err) {
+      if (typeof ismShowNotif === 'function') {
+        ismShowNotif('Error', err.message || 'Failed to delete stock item', 'danger');
+      } else {
+        alert(err.message || 'Failed to delete stock item');
+      }
+    })
+    .deleteStockRecord(id, name);
+};
+
+// Also inject delete button into Edit Stock modal if not present
+function injectEditStockDeleteButton() {
+  var modal = document.getElementById('modal-edit-stock');
+  if (!modal || document.getElementById('btn-delete-stock-modal')) return;
+  var updateBtn = modal.querySelector('button[onclick*="updateEditedStock"]');
+  if (updateBtn) {
+    var delBtnHtml = '<button type="button" id="btn-delete-stock-modal" onclick="deleteStockFromModal(this)" class="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition shadow-md mt-2 flex items-center justify-center gap-2"><i class="fa-solid fa-trash-can mr-1"></i>Delete This Stock Item</button>';
+    updateBtn.insertAdjacentHTML('afterend', delBtnHtml);
+  }
+}
+
+window.deleteStockFromModal = function() {
+  var id = (typeof currentEditStock !== 'undefined' && currentEditStock) ? (currentEditStock.id || '') : '';
+  var name = document.getElementById('edit-stock-name') ? document.getElementById('edit-stock-name').value : '';
+  window.deleteStockItem(id, name);
+};
+
+// Patch renderAdminStockTable to add Delete button on each row
+var origRenderAdminStockTable = window.renderAdminStockTable;
+window.renderAdminStockTable = function() {
+  var tbody = document.getElementById('admin-stock-table-body');
+  if (!tbody || typeof adminStockCache === 'undefined') return;
+  var q = (document.getElementById('stock-search')?.value || '').toLowerCase().trim();
+  var list = adminStockCache.filter(function(i) {
+    return !q || String(i.product || '').toLowerCase().indexOf(q) >= 0 || String(i.id || '').toLowerCase().indexOf(q) >= 0;
+  });
+  tbody.innerHTML = list.map(function(item) {
+    return '<tr class="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition">' +
+      '<td class="p-3 font-mono text-xs text-slate-500">' + escapeHtml(String(item.id || '—')) + '</td>' +
+      '<td class="p-3 font-semibold text-slate-800">' + escapeHtml(String(item.product || '')) + '</td>' +
+      '<td class="p-3 font-bold ' + (Number(item.qty) > 0 ? 'text-emerald-600' : 'text-rose-600') + '">' + Number(item.qty || 0) + '</td>' +
+      '<td class="p-3 font-medium">₹' + Number(item.price || 0).toFixed(2) + '</td>' +
+      '<td class="p-3 text-right whitespace-nowrap">' +
+      '<button type="button" onclick=\'openEditStock(' + JSON.stringify(String(item.id || '')) + ', ' + Number(item.rowNumber || 0) + ')\' class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-teal-700 bg-teal-50 hover:bg-teal-100 font-bold text-xs transition" title="Edit stock">' +
+      '<i class="fa-solid fa-pen-to-square"></i><span>Edit</span></button>' +
+      '<button type="button" onclick=\'deleteStockItem(' + JSON.stringify(String(item.id || '')) + ', ' + JSON.stringify(String(item.product || '')) + ')\' class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-rose-700 bg-rose-50 hover:bg-rose-100 font-bold text-xs transition ml-2" title="Delete stock item">' +
+      '<i class="fa-solid fa-trash-can"></i><span>Delete</span></button>' +
+      '</td></tr>';
+  }).join('') || '<tr><td colspan="5" class="p-3 text-center text-slate-400">No stock items found</td></tr>';
+};
 
 // ── Initializations ──
 (function() {

@@ -177,6 +177,18 @@
       return { success: true, message: 'Stock record updated successfully.' };
     },
 
+    async deleteStockRecord(id, name) {
+      let query = '';
+      if (id && String(id).trim() && String(id).trim() !== 'null' && !String(id).startsWith('ROW:')) {
+        query = `Stock?ID=eq.${encodeURIComponent(String(id).trim())}`;
+      } else if (name && String(name).trim()) {
+        query = `Stock?Product=eq.${encodeURIComponent(String(name).trim())}`;
+      }
+      if (!query) return { success: false, message: 'Stock identifier required to delete.' };
+      await api(query, { method: 'DELETE' });
+      return { success: true, message: 'Stock item deleted successfully.' };
+    },
+
     async getAllUnions() {
       const rows = await api('unions?select=*&order=Class.asc') || [];
       return rows.map(u => ({
