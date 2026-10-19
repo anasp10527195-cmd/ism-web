@@ -1,0 +1,2292 @@
+﻿<!DOCTYPE html>
+<html lang="ml" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>വരവ് ചിലവ് (Varavu Chilavu) - സമ്പൂർണ്ണ കണക്ക് പുസ്തകം</title>
+  
+  <!-- Google Fonts: Manrope & Noto Sans Malayalam -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Malayalam:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans Malayalam"', 'Manrope', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: 'Noto Sans Malayalam', 'Manrope', sans-serif;
+    }
+    
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+    }
+    .dark ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(16, 185, 129, 0.35);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(16, 185, 129, 0.65);
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printSection, #printSection * {
+        visibility: visible;
+      }
+      #printSection {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+        background: white !important;
+        color: black !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .dark .glass-card {
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200 antialiased flex flex-col">
+
+  <!-- ================= TOP NAVIGATION BAR ================= -->
+  <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 transition-colors duration-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 sm:h-20">
+        
+        <!-- Brand Logo & Title -->
+        <div class="flex items-center space-x-3 sm:space-x-4">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25 ring-2 ring-emerald-500/30">
+            <i class="fa-solid fa-scale-balanced text-lg sm:text-xl"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h1 class="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
+                <span class="text-emerald-600 dark:text-emerald-400">വരവ്</span>
+                <span class="text-slate-400 dark:text-slate-500 font-light">&</span>
+                <span class="text-rose-600 dark:text-rose-400">ചിലവ്</span>
+              </h1>
+              <span class="hidden md:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                PRO 2026
+              </span>
+              <a href="index.html" class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition" title="Ihsan Super Market">
+                <i class="fa-solid fa-store mr-1 text-teal-600"></i> ISM
+              </a>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium hidden sm:block" id="app-tagline">
+              സമ്പൂർണ്ണ ദൈനംദിന കണക്ക് പുസ്തകം (Smart Cashbook & Ledger)
+            </p>
+          </div>
+        </div>
+
+        <!-- Right Quick Actions -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+          
+          <!-- Add Income (വരവ്) Button -->
+          <button onclick="openTransactionModal('income')" class="inline-flex items-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 active:scale-95 transition-all">
+            <i class="fa-solid fa-circle-plus mr-1.5 sm:mr-2 text-emerald-200"></i>
+            <span class="lang-text" data-key="add_income">+ വരവ്</span>
+          </button>
+
+          <!-- Add Expense (ചിലവ്) Button -->
+          <button onclick="openTransactionModal('expense')" class="inline-flex items-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 active:scale-95 transition-all">
+            <i class="fa-solid fa-circle-minus mr-1.5 sm:mr-2 text-rose-200"></i>
+            <span class="lang-text" data-key="add_expense">- ചിലവ്</span>
+          </button>
+
+          <!-- Language Switcher Toggle -->
+          <button id="langToggleBtn" onclick="toggleLanguage()" title="Switch Language" class="p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold flex items-center gap-1 transition-colors">
+            <i class="fa-solid fa-language text-base text-emerald-600 dark:text-emerald-400"></i>
+            <span id="currentLangLabel" class="hidden sm:inline">English</span>
+          </button>
+
+          <!-- Dark/Light Theme Toggle -->
+          <button id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" class="p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-base transition-colors">
+            <i id="themeIcon" class="fa-solid fa-moon"></i>
+          </button>
+
+          <!-- Data Menu Button (Export/Import/Reset) -->
+          <div class="relative">
+            <button id="dataMenuBtn" onclick="toggleDataMenu()" class="p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-base transition-colors" title="Backup & Data">
+              <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
+            <div id="dataMenuDropdown" class="hidden absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 py-2 z-50">
+              <a href="javascript:void(0)" onclick="exportToCSV()" class="flex items-center px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600">
+                <i class="fa-solid fa-file-excel w-5 text-emerald-600"></i>
+                <span class="lang-text" data-key="export_excel">Excel / CSV ഡൗൺലോഡ്</span>
+              </a>
+              <a href="javascript:void(0)" onclick="exportToJSON()" class="flex items-center px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600">
+                <i class="fa-solid fa-download w-5 text-blue-600"></i>
+                <span class="lang-text" data-key="backup_json">ബാക്കപ്പ് ഡൗൺലോഡ് (JSON)</span>
+              </a>
+              <label class="flex items-center px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 cursor-pointer">
+                <i class="fa-solid fa-upload w-5 text-amber-600"></i>
+                <span class="lang-text" data-key="restore_json">ബാക്കപ്പ് റീസ്റ്റോർ (Restore)</span>
+                <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importFromJSON(event)">
+              </label>
+              <div class="border-t border-slate-100 dark:border-slate-800 my-1"></div>
+              <a href="javascript:void(0)" onclick="printReport()" class="flex items-center px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                <i class="fa-solid fa-print w-5 text-purple-600"></i>
+                <span class="lang-text" data-key="print_statement">റിപ്പോർട്ട് പ്രിന്റ് / PDF</span>
+              </a>
+              <div class="border-t border-slate-100 dark:border-slate-800 my-1"></div>
+              <a href="javascript:void(0)" onclick="confirmResetSampleData()" class="flex items-center px-4 py-2.5 text-xs font-semibold text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/40">
+                <i class="fa-solid fa-rotate-left w-5"></i>
+                <span class="lang-text" data-key="reset_sample">സാംപിൾ ഡാറ്റ വീണ്ടെടുക്കുക</span>
+              </a>
+              <a href="javascript:void(0)" onclick="confirmClearAllData()" class="flex items-center px-4 py-2.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40">
+                <i class="fa-solid fa-trash-can w-5"></i>
+                <span class="lang-text" data-key="clear_all">എല്ലാ ഡാറ്റയും മായ്ക്കുക</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex space-x-1 sm:space-x-4 border-t border-slate-100 dark:border-slate-800/80 overflow-x-auto py-2 no-scrollbar">
+        <button onclick="switchView('dashboard')" id="tab-dashboard" class="nav-tab active-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all bg-emerald-100/70 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span class="lang-text" data-key="nav_dashboard">ഡാഷ്‌ബോർഡ്</span>
+        </button>
+        <button onclick="switchView('transactions')" id="tab-transactions" class="nav-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <i class="fa-solid fa-list-check"></i>
+          <span class="lang-text" data-key="nav_transactions">ഇടപാടുകൾ (All Data)</span>
+          <span id="tabTxnCountBadge" class="px-1.5 py-0.2 rounded-full text-[11px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">0</span>
+        </button>
+        <button onclick="switchView('daybook')" id="tab-daybook" class="nav-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <i class="fa-solid fa-book-bookmark"></i>
+          <span class="lang-text" data-key="nav_daybook">ഡേ ബുക്ക് (Daybook)</span>
+        </button>
+        <button onclick="switchView('analytics')" id="tab-analytics" class="nav-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <i class="fa-solid fa-chart-line"></i>
+          <span class="lang-text" data-key="nav_analytics">വിശകലനം & ചാർട്ടുകൾ</span>
+        </button>
+        <button onclick="switchView('statement')" id="tab-statement" class="nav-tab px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <i class="fa-solid fa-receipt"></i>
+          <span class="lang-text" data-key="nav_statement">സ്റ്റേറ്റ്മെന്റ് & പ്രിന്റ്</span>
+        </button>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTAINER ================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- ================= VIEW 1: DASHBOARD ================= -->
+    <div id="view-dashboard" class="space-y-6">
+      
+      <!-- Top Metrics Summary Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Total Income Card (ആകെ വരവ്) -->
+        <div class="glass-card rounded-3xl p-5 border border-emerald-200/60 dark:border-emerald-900/40 relative overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="lang-text" data-key="total_income">ആകെ വരവ് (Income)</span>
+            </span>
+            <div class="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <i class="fa-solid fa-arrow-down-left text-lg"></i>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div id="statTotalIncome" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              ₹0.00
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <span id="statIncomeCount">0 ഇടപാടുകൾ</span>
+              <span class="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-chart-simple"></i> <span id="statThisMonthIncome">ഈ മാസം ₹0</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Expense Card (ആകെ ചിലവ്) -->
+        <div class="glass-card rounded-3xl p-5 border border-rose-200/60 dark:border-rose-900/40 relative overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+              <span class="lang-text" data-key="total_expense">ആകെ ചിലവ് (Expense)</span>
+            </span>
+            <div class="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+              <i class="fa-solid fa-arrow-up-right text-lg"></i>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div id="statTotalExpense" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              ₹0.00
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <span id="statExpenseCount">0 ചിലവുകൾ</span>
+              <span class="text-rose-600 dark:text-rose-400 font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-chart-simple"></i> <span id="statThisMonthExpense">ഈ മാസം ₹0</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Net Balance Card (നീക്കിയിരിപ്പ് / ബാക്കി തുക) -->
+        <div class="glass-card rounded-3xl p-5 border border-blue-200/60 dark:border-blue-900/40 relative overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-wallet text-sm"></i>
+              <span class="lang-text" data-key="net_balance">നീക്കിയിരിപ്പ് (Balance)</span>
+            </span>
+            <div id="balanceBadgeIcon" class="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <i class="fa-solid fa-vault text-lg"></i>
+            </div>
+          </div>
+          <div class="mt-3">
+            <div id="statNetBalance" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              ₹0.00
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <span id="balanceStatusBadge" class="font-bold text-emerald-600 dark:text-emerald-400">സുരക്ഷിതം (Surplus)</span>
+              <span id="statSavingsRate" class="font-semibold text-slate-600 dark:text-slate-300">0% ലാഭം</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Today's Cash Flow Card (ഇന്നത്തെ വരവ് - ചിലവ്) -->
+        <div class="glass-card rounded-3xl p-5 border border-purple-200/60 dark:border-purple-900/40 relative overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
+              <i class="fa-regular fa-calendar-check text-sm"></i>
+              <span class="lang-text" data-key="today_summary">ഇന്നത്തെ കണക്ക്</span>
+            </span>
+            <div class="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+              <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+            </div>
+          </div>
+          <div class="mt-3 space-y-1">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-500 dark:text-slate-400">വരവ്:</span>
+              <span id="statTodayIncome" class="font-bold text-emerald-600 dark:text-emerald-400">₹0.00</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-500 dark:text-slate-400">ചിലവ്:</span>
+              <span id="statTodayExpense" class="font-bold text-rose-600 dark:text-rose-400">₹0.00</span>
+            </div>
+            <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
+              <span class="font-bold text-slate-700 dark:text-slate-300">ഇന്നത്തെ ബാക്കി:</span>
+              <span id="statTodayNet" class="font-black text-slate-900 dark:text-white">₹0.00</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Monthly Trends Chart & Expense Categories -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Monthly Trend Chart -->
+        <div class="lg:col-span-2 glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-2">
+            <div>
+              <h3 class="font-black text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-chart-column text-emerald-500"></i>
+                <span class="lang-text" data-key="monthly_trend_title">വരവ് vs ചിലവ് പ്രതിമാസ താരതമ്യം</span>
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">2026 മാസങ്ങളിലെ വരവ് ചിലവ് താരതമ്യ ചാർട്ട്</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+              2026
+            </span>
+          </div>
+          <div class="h-64 sm:h-72 mt-4">
+            <canvas id="monthlyTrendChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Expense Category Donut Chart -->
+        <div class="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h3 class="font-black text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-rose-500"></i>
+                <span class="lang-text" data-key="category_chart_title">ചിലവ് വിഭാഗങ്ങൾ</span>
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">പ്രധാന ചിലവ് ശതമാനങ്ങൾ</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[220px] flex items-center justify-center mt-3">
+            <canvas id="categoryDonutChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Recent Transactions Mini Table -->
+      <div class="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 class="font-black text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-teal-500"></i>
+              <span class="lang-text" data-key="recent_transactions">ഏറ്റവും പുതിയ ഇടപാടുകൾ</span>
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">അവസാനം രേഖപ്പെടുത്തിയ വരവ് - ചിലവ് വിവരങ്ങൾ</p>
+          </div>
+          <button onclick="switchView('transactions')" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+            <span class="lang-text" data-key="view_all">എല്ലാം കാണുക</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+        <div class="overflow-x-auto mt-4">
+          <table class="w-full text-left text-sm">
+            <thead class="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 bg-slate-50/80 dark:bg-slate-900/60 rounded-xl">
+              <tr>
+                <th class="px-3 py-3 rounded-l-xl">തീയതി & സമയം</th>
+                <th class="px-3 py-3">തരം</th>
+                <th class="px-3 py-3">വിവരണം / വ്യക്തി</th>
+                <th class="px-3 py-3">വിഭാഗം</th>
+                <th class="px-3 py-3">രീതി</th>
+                <th class="px-3 py-3 text-right">തുക (₹)</th>
+                <th class="px-3 py-3 rounded-r-xl text-center">വിശദാംശം</th>
+              </tr>
+            </thead>
+            <tbody id="recentTransactionsTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= VIEW 2: TRANSACTIONS (ALL DATA) ================= -->
+    <div id="view-transactions" class="hidden space-y-6">
+      
+      <!-- Filter & Search Toolbar -->
+      <div class="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+        
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <!-- Live Search Bar -->
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="searchInput" oninput="applyFilters()" placeholder="വിവരണം, വ്യക്തി, ടാഗ്, ബിൽ നമ്പർ എന്നിവ തിരയുക..." class="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-slate-900 dark:text-white">
+          </div>
+
+          <!-- Quick Type Filter Buttons -->
+          <div class="inline-flex rounded-2xl p-1 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 self-start md:self-auto">
+            <button onclick="setTypeFilter('all')" id="btnFilterAll" class="filter-type-btn active px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm">
+              <span class="lang-text" data-key="filter_all">എല്ലാം</span>
+            </button>
+            <button onclick="setTypeFilter('income')" id="btnFilterIncome" class="filter-type-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-emerald-700 dark:text-emerald-400 hover:bg-white/50 dark:hover:bg-slate-900/50">
+              <i class="fa-solid fa-arrow-down-left mr-1"></i>
+              <span class="lang-text" data-key="filter_income">വരവ് മാത്രം</span>
+            </button>
+            <button onclick="setTypeFilter('expense')" id="btnFilterExpense" class="filter-type-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-rose-700 dark:text-rose-400 hover:bg-white/50 dark:hover:bg-slate-900/50">
+              <i class="fa-solid fa-arrow-up-right mr-1"></i>
+              <span class="lang-text" data-key="filter_expense">ചിലവ് മാത്രം</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Secondary Filter Controls -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+          
+          <!-- Category Filter -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
+              <i class="fa-solid fa-shapes mr-1"></i> വിഭാഗം (Category)
+            </label>
+            <select id="filterCategory" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white">
+              <option value="all">എല്ലാ വിഭാഗങ്ങളും</option>
+            </select>
+          </div>
+
+          <!-- Payment Method Filter -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
+              <i class="fa-solid fa-credit-card mr-1"></i> പേയ്മെന്റ് രീതി
+            </label>
+            <select id="filterPayment" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white">
+              <option value="all">എല്ലാ രീതികളും</option>
+              <option value="upi">Google Pay / UPI</option>
+              <option value="cash">പണം (Cash)</option>
+              <option value="bank">ബാങ്ക് ട്രാൻസ്ഫർ (Bank)</option>
+              <option value="card">ഡെബിറ്റ് / ക്രെഡിറ്റ് കാർഡ്</option>
+              <option value="cheque">ചെക്ക് (Cheque)</option>
+            </select>
+          </div>
+
+          <!-- Date Range Filter Preset -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
+              <i class="fa-regular fa-calendar-days mr-1"></i> തീയതി പരിധി
+            </label>
+            <select id="filterDatePreset" onchange="handleDatePresetChange()" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white">
+              <option value="all">മുഴുവൻ തീയതികളും (All Time)</option>
+              <option value="today">ഇന്ന് (Today)</option>
+              <option value="yesterday">ഇന്നലെ (Yesterday)</option>
+              <option value="this_week">ഈ ആഴ്ച (This Week)</option>
+              <option value="this_month">ഈ മാസം (This Month)</option>
+              <option value="last_month">കഴിഞ്ഞ മാസം (Last Month)</option>
+              <option value="custom">കസ്റ്റം തീയതി (Custom Range)</option>
+            </select>
+          </div>
+
+          <!-- Sort Selector -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">
+              <i class="fa-solid fa-arrow-down-wide-short mr-1"></i> ക്രമപ്പെടുത്തുക (Sort)
+            </label>
+            <select id="sortSelector" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white">
+              <option value="date_desc">തീയതി (പുതിയത് ആദ്യം)</option>
+              <option value="date_asc">തീയതി (പഴയത് ആദ്യം)</option>
+              <option value="amount_desc">തുക (ഉയർന്നത് ആദ്യം)</option>
+              <option value="amount_asc">തുക (കുറഞ്ഞത് ആദ്യം)</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Custom Date Range Inputs (Shown when 'custom' selected) -->
+        <div id="customDateRangeBox" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">ആരംഭ തീയതി (From Date):</label>
+            <input type="date" id="filterFromDate" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">അവസാന തീയതി (To Date):</label>
+            <input type="date" id="filterToDate" onchange="applyFilters()" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Filtered Summary Ribbon -->
+      <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/40 text-xs">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-filter text-emerald-600 dark:text-emerald-400"></i>
+          <span class="font-bold text-slate-700 dark:text-slate-300">ഫിൽട്ടർ ചെയ്ത ആകെ വിവരങ്ങൾ:</span>
+          <span id="filteredCountBadge" class="px-2 py-0.5 rounded-full font-bold bg-emerald-600 text-white">0</span>
+        </div>
+        <div class="flex items-center gap-4 flex-wrap">
+          <span class="text-slate-600 dark:text-slate-400">വരവ്: <strong id="filteredIncomeSum" class="text-emerald-600 dark:text-emerald-400 font-bold">₹0.00</strong></span>
+          <span class="text-slate-600 dark:text-slate-400">ചിലവ്: <strong id="filteredExpenseSum" class="text-rose-600 dark:text-rose-400 font-bold">₹0.00</strong></span>
+          <span class="text-slate-600 dark:text-slate-400">ബാക്കി: <strong id="filteredNetSum" class="text-slate-900 dark:text-white font-black">₹0.00</strong></span>
+        </div>
+      </div>
+
+      <!-- Main Transactions Master Table -->
+      <div class="glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th class="px-4 py-3.5">തീയതി & സമയം</th>
+                <th class="px-4 py-3.5">തരം</th>
+                <th class="px-4 py-3.5">വിവരണം / വ്യക്തി</th>
+                <th class="px-4 py-3.5">വിഭാഗം</th>
+                <th class="px-4 py-3.5">പേയ്മെന്റ് രീതി</th>
+                <th class="px-4 py-3.5">ബിൽ / റഫറൻസ്</th>
+                <th class="px-4 py-3.5 text-right">തുക (₹)</th>
+                <th class="px-4 py-3.5 text-center">പ്രവർത്തനങ്ങൾ</th>
+              </tr>
+            </thead>
+            <tbody id="masterTransactionsTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/80">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="tableEmptyState" class="hidden p-12 text-center space-y-3">
+          <div class="w-16 h-16 mx-auto rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 text-2xl">
+            <i class="fa-solid fa-folder-open"></i>
+          </div>
+          <h4 class="font-bold text-slate-700 dark:text-slate-300">ഇടപാടുകൾ ഒന്നും കണ്ടെത്തിയില്ല</h4>
+          <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">തിരഞ്ഞെടുത്ത ഫിൽട്ടറുകൾക്ക് അനുയോജ്യമായ വിവരങ്ങൾ ലഭ്യമല്ല. തിരച്ചിൽ മാറ്റി നോക്കുകയോ പുതിയ വരവ് / ചിലവ് ചേർക്കുകയോ ചെയ്യുക.</p>
+          <button onclick="resetFilters()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300">
+            ഫിൽട്ടറുകൾ പുനഃക്രമീകരിക്കുക
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= VIEW 3: DAYBOOK (ഡേ ബുക്ക്) ================= -->
+    <div id="view-daybook" class="hidden space-y-6">
+      
+      <div class="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-book-open text-emerald-500"></i>
+            <span class="lang-text" data-key="daybook_title">ദൈനംദിന ഡേ ബുക്ക് (Daily Cashbook)</span>
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">ഓരോ ദിവസത്തെയും വരവ്, ചിലവ്, ആരംഭ നീക്കിയിരിപ്പും അവസാന നീക്കിയിരിപ്പും</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="collapseAllDaybook(true)" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+            <i class="fa-solid fa-compress mr-1"></i> ചുരുക്കുക
+          </button>
+          <button onclick="collapseAllDaybook(false)" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+            <i class="fa-solid fa-expand mr-1"></i> എല്ലാം വികസിപ്പിക്കുക
+          </button>
+        </div>
+      </div>
+
+      <!-- Daybook Ledger Cards List -->
+      <div id="daybookContainer" class="space-y-4">
+        <!-- Rendered by renderDaybook() -->
+      </div>
+
+    </div>
+
+    <!-- ================= VIEW 4: ANALYTICS & CHARTS ================= -->
+    <div id="view-analytics" class="hidden space-y-6">
+      
+      <!-- Top Analytics Metric Highlights -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">ശരാശരി പ്രതിദിന ചിലവ്</span>
+          <div id="analyticAvgDailyExpense" class="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">₹0.00</div>
+          <p class="text-xs text-slate-400 mt-1">ഒരു ദിവസത്തെ ശരാശരി ചിലവ് തുക</p>
+        </div>
+        <div class="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">ഏറ്റവും വലിയ ഒറ്റ ചിലവ്</span>
+          <div id="analyticMaxSingleExpense" class="text-2xl font-black text-slate-900 dark:text-white mt-1">₹0.00</div>
+          <p id="analyticMaxExpenseNote" class="text-xs text-slate-400 mt-1">-</p>
+        </div>
+        <div class="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">ഏറ്റവും വലിയ വരവ് മാർഗ്ഗം</span>
+          <div id="analyticTopIncomeSource" class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">-</div>
+          <p id="analyticTopIncomeAmount" class="text-xs text-slate-400 mt-1">₹0.00</p>
+        </div>
+      </div>
+
+      <!-- Analytics Charts Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Payment Methods Distribution Chart -->
+        <div class="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <h3 class="font-black text-base text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-wallet text-indigo-500"></i>
+            <span>പേയ്മെന്റ് രീതികളുടെ വിഹിതം (Payment Modes)</span>
+          </h3>
+          <div class="h-64 flex items-center justify-center">
+            <canvas id="paymentMethodChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Income Sources Breakdown Chart -->
+        <div class="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+          <h3 class="font-black text-base text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-money-bill-trend-up text-emerald-500"></i>
+            <span>വരവ് മാർഗ്ഗങ്ങൾ (Income Breakdown)</span>
+          </h3>
+          <div class="h-64 flex items-center justify-center">
+            <canvas id="incomeSourcesChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Category Expense Ranking Table -->
+      <div class="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+        <h3 class="font-black text-base text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+          <i class="fa-solid fa-ranking-star text-amber-500"></i>
+          <span>ചിലവ് വിഭാഗങ്ങളുടെ മുൻഗണനാ പട്ടിക (Highest Expenses Ranking)</span>
+        </h3>
+        <div id="categoryRankingList" class="space-y-3">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= VIEW 5: STATEMENT & PRINT REPORT ================= -->
+    <div id="view-statement" class="hidden space-y-6">
+      
+      <div class="glass-card rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 no-print">
+        <div>
+          <h3 class="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-receipt text-purple-500"></i>
+            <span class="lang-text" data-key="statement_title">ഔദ്യോഗിക അക്കൗണ്ട് സ്റ്റേറ്റ്മെന്റ്</span>
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">പ്രിന്റ് ചെയ്യാനും PDF ആയി സേവ് ചെയ്യാനും സാധിക്കുന്ന സ്റ്റേറ്റ്മെന്റ്</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="printReport()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-600/20 flex items-center gap-2">
+            <i class="fa-solid fa-print"></i>
+            <span>പ്രിന്റ് / PDF ആയി സേവ് ചെയ്യുക</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Formal Statement Sheet (Print Target) -->
+      <div id="printSection" class="bg-white text-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-sm">
+        
+        <!-- Report Header -->
+        <div class="border-b-2 border-slate-900 pb-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-2xl font-black tracking-tight text-emerald-700">വരവ്</span>
+              <span class="text-xl text-slate-400">&</span>
+              <span class="text-2xl font-black tracking-tight text-rose-700">ചിലവ്</span>
+            </div>
+            <p class="text-xs text-slate-600 font-semibold mt-1">സമ്പൂർണ്ണ സാമ്പത്തിക കണക്ക് പുസ്തകം (Financial Statement)</p>
+            <p class="text-xs text-slate-500" id="statementGeneratedDate">തയ്യാറാക്കിയ തീയതി: -</p>
+          </div>
+          <div class="text-left sm:text-right">
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-300 uppercase">
+              ഔദ്യോഗിക സ്റ്റേറ്റ്മെന്റ്
+            </span>
+            <p class="text-xs text-slate-600 mt-2">കറൻസി: ഇന്ത്യൻ രൂപ (₹ INR)</p>
+          </div>
+        </div>
+
+        <!-- Statement Summary Grid -->
+        <div class="grid grid-cols-3 gap-4 mb-8 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+          <div>
+            <span class="text-xs font-bold uppercase text-slate-500">ആകെ വരവ്</span>
+            <div id="statementIncomeTotal" class="text-xl sm:text-2xl font-black text-emerald-700 mt-1">₹0.00</div>
+          </div>
+          <div>
+            <span class="text-xs font-bold uppercase text-slate-500">ആകെ ചിലവ്</span>
+            <div id="statementExpenseTotal" class="text-xl sm:text-2xl font-black text-rose-700 mt-1">₹0.00</div>
+          </div>
+          <div>
+            <span class="text-xs font-bold uppercase text-slate-500">നീക്കിയിരിപ്പ് / ബാക്കി</span>
+            <div id="statementNetTotal" class="text-xl sm:text-2xl font-black text-slate-900 mt-1">₹0.00</div>
+          </div>
+        </div>
+
+        <!-- Statement Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b-2 border-slate-300 font-bold uppercase text-slate-700">
+              <tr>
+                <th class="py-2 px-2">ക്രമം</th>
+                <th class="py-2 px-2">തീയതി</th>
+                <th class="py-2 px-2">തരം</th>
+                <th class="py-2 px-2">വിവരണം & വ്യക്തി</th>
+                <th class="py-2 px-2">വിഭാഗം</th>
+                <th class="py-2 px-2">രീതി</th>
+                <th class="py-2 px-2 text-right">വരവ് (₹)</th>
+                <th class="py-2 px-2 text-right">ചിലവ് (₹)</th>
+              </tr>
+            </thead>
+            <tbody id="statementTableBody" class="divide-y divide-slate-200">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Statement Footer Signatures -->
+        <div class="mt-12 pt-8 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+          <div>
+            <p>പരിശോധിച്ചത്: .......................................</p>
+            <p class="mt-1">തീയതി: ............................................</p>
+          </div>
+          <div class="text-right">
+            <p>അംഗീകാരം / ഒപ്പ്: .......................................</p>
+            <p class="mt-1 font-semibold text-slate-700">വരവ് ചിലവ് അക്കൗണ്ട്സ്</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 text-center text-xs text-slate-500 dark:text-slate-400 no-print transition-colors">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="font-black text-slate-800 dark:text-slate-200">വരവ് ചിലവ്</span>
+        <span>•</span>
+        <span>നിങ്ങളുടെ ദൈനംദിന വരവ് ചിലവുകൾ കൃത്യമായി സൂക്ഷിക്കാം</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <button onclick="exportToCSV()" class="hover:text-emerald-600 transition-colors">
+          <i class="fa-solid fa-file-excel mr-1 text-emerald-600"></i> Excel Export
+        </button>
+        <button onclick="confirmResetSampleData()" class="hover:text-teal-600 transition-colors">
+          <i class="fa-solid fa-rotate-left mr-1"></i> Reset Sample Data
+        </button>
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="hover:text-slate-800 dark:hover:text-white transition-colors">
+          <i class="fa-solid fa-arrow-up mr-1"></i> Top
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= MODAL: ADD / EDIT TRANSACTION ================= -->
+  <div id="transactionModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all">
+      
+      <!-- Modal Header -->
+      <div id="modalHeaderBg" class="px-6 py-4 bg-emerald-600 text-white flex items-center justify-between transition-colors">
+        <div class="flex items-center space-x-2">
+          <i id="modalHeaderIcon" class="fa-solid fa-circle-plus text-xl"></i>
+          <div>
+            <h3 id="modalTitle" class="font-black text-base sm:text-lg">പുതിയ വരവ് ചേർക്കുക</h3>
+            <p id="modalSubtitle" class="text-xs text-emerald-100">വരവ് സംബന്ധിച്ച മുഴുവൻ വിവരങ്ങളും രേഖപ്പെടുത്തുക</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeTransactionModal()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-all">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Form Body -->
+      <form id="transactionForm" onsubmit="handleTransactionSubmit(event)" class="p-6 space-y-4">
+        <input type="hidden" id="editTxnId" value="">
+        <input type="hidden" id="txnTypeInput" value="income">
+
+        <!-- Amount & Quick Buttons -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+            തുക (Amount in ₹) <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-slate-400">₹</span>
+            <input type="number" id="txnAmount" required min="1" step="any" placeholder="0.00" class="w-full pl-9 pr-4 py-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xl font-black text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 transition-all">
+          </div>
+          <!-- Quick Amount Chips -->
+          <div class="flex items-center gap-1.5 flex-wrap mt-2">
+            <button type="button" onclick="addQuickAmount(100)" class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">+₹100</button>
+            <button type="button" onclick="addQuickAmount(500)" class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">+₹500</button>
+            <button type="button" onclick="addQuickAmount(1000)" class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">+₹1,000</button>
+            <button type="button" onclick="addQuickAmount(2000)" class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">+₹2,000</button>
+            <button type="button" onclick="addQuickAmount(5000)" class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">+₹5,000</button>
+          </div>
+        </div>
+
+        <!-- Description (വിവരണം) -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+            വിവരണം (Description) <span class="text-rose-500">*</span>
+          </label>
+          <input type="text" id="txnDescription" required placeholder="ഉദാ: ശമ്പളം, പലചരക്ക് സാധനങ്ങൾ, കറണ്ട് ബിൽ..." class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+        </div>
+
+        <!-- Category & Payment Method in 2 columns -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+              വിഭാഗം (Category) <span class="text-rose-500">*</span>
+            </label>
+            <select id="txnCategory" required class="w-full px-3 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+              പേയ്മെന്റ് രീതി <span class="text-rose-500">*</span>
+            </label>
+            <select id="txnPaymentMethod" required class="w-full px-3 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="upi">Google Pay / PhonePe / UPI</option>
+              <option value="cash">നേരിട്ടുള്ള പണം (Cash)</option>
+              <option value="bank">ബാങ്ക് ട്രാൻസ്ഫർ (Bank)</option>
+              <option value="card">ഡെബിറ്റ് / ക്രെഡിറ്റ് കാർഡ്</option>
+              <option value="cheque">ചെക്ക് (Cheque)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Date & Time -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+              തീയതി (Date) <span class="text-rose-500">*</span>
+            </label>
+            <input type="date" id="txnDate" required class="w-full px-3 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+              സമയം (Time)
+            </label>
+            <input type="time" id="txnTime" class="w-full px-3 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+
+        <!-- Party Name & Invoice/Ref Number -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+              വ്യക്തി / സ്ഥാപനം (Party / Shop)
+            </label>
+            <input type="text" id="txnParty" placeholder="ഉദാ: KSEB, സപ്ലൈകോ, അബ്ദുല്ല..." class="w-full px-3 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+              റഫറൻസ് / ബിൽ # (Bill Ref)
+            </label>
+            <input type="text" id="txnReference" placeholder="ഉദാ: UPI-9812, INV-402..." class="w-full px-3 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+            ടാഗുകൾ (Tags) - കോമയിട്ട് നൽകുക
+          </label>
+          <input type="text" id="txnTags" placeholder="ഉദാ: #വീട്, #കച്ചവടം, #അത്യാവശ്യം" class="w-full px-3 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <!-- Form Action Buttons -->
+        <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <button type="button" onclick="closeTransactionModal()" class="px-5 py-2.5 rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+            റദ്ദാക്കുക (Cancel)
+          </button>
+          <button type="submit" id="modalSubmitBtn" class="px-6 py-2.5 rounded-2xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/25 active:scale-95 transition-all">
+            സൂക്ഷിക്കുക (Save)
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL: TRANSACTION VOUCHER DETAIL ================= -->
+  <div id="voucherModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      
+      <div id="voucherHeader" class="p-6 text-center text-white bg-emerald-600 relative">
+        <button onclick="closeVoucherModal()" class="absolute right-4 top-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div id="voucherTypeBadge" class="inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-white/20 text-white mb-2">
+          വരവ് വൗച്ചർ
+        </div>
+        <div id="voucherAmount" class="text-3xl font-black tracking-tight">₹0.00</div>
+        <p id="voucherDescription" class="text-sm font-semibold text-white/90 mt-1">-</p>
+      </div>
+
+      <div class="p-6 space-y-3 text-xs" id="voucherDetailsList">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="p-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <button id="voucherEditBtn" class="px-4 py-2 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-pen-to-square text-emerald-600"></i> എഡിറ്റ് ചെയ്യുക
+        </button>
+        <button id="voucherDeleteBtn" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 hover:bg-rose-100 flex items-center gap-1.5">
+          <i class="fa-solid fa-trash-can"></i> ഇല്ലാതാക്കുക
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification Pill -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold text-white bg-slate-900 border border-slate-700">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMsg">വിവരങ്ങൾ സൂക്ഷിച്ചു!</span>
+  </div>
+
+  <!-- ================= JAVASCRIPT APPLICATION LOGIC ================= -->
+  <script>
+    /**
+     * VARAVU CHILAVU (വരവ് ചിലവ്)
+     * Complete Smart Ledger & Expense Management System
+     */
+
+    const CATEGORIES = {
+      income: {
+        salary: { ml: 'ശമ്പളം', en: 'Salary', icon: 'fa-briefcase', color: 'emerald' },
+        business: { ml: 'കച്ചവടം / ബിസിനസ്സ്', en: 'Business / Sales', icon: 'fa-store', color: 'blue' },
+        freelance: { ml: 'കൂലി / ഫ്രീലാൻസ്', en: 'Freelance / Wages', icon: 'fa-laptop-code', color: 'cyan' },
+        rent_income: { ml: 'വാടക വരുമാനം', en: 'Rental Income', icon: 'fa-building', color: 'indigo' },
+        agriculture: { ml: 'കൃഷി / ഫാം വരുമാനം', en: 'Agriculture / Farming', icon: 'fa-seedling', color: 'lime' },
+        interest: { ml: 'ബാങ്ക് പലിശ / ലാഭവിഹിതം', en: 'Interest / Investment', icon: 'fa-chart-line', color: 'teal' },
+        loan_return: { ml: 'വായ്പാ തിരിച്ചടവ് ലഭിച്ചത്', en: 'Loan Repayment Received', icon: 'fa-hand-holding-dollar', color: 'purple' },
+        gift_reward: { ml: 'സമ്മാനം / ഗ്രാന്റ്', en: 'Gift / Grant', icon: 'fa-gift', color: 'pink' },
+        other_income: { ml: 'മറ്റ് വരവുകൾ', en: 'Other Income', icon: 'fa-coins', color: 'amber' }
+      },
+      expense: {
+        groceries: { ml: 'പലചരക്ക് & പച്ചക്കറി', en: 'Groceries & Food', icon: 'fa-basket-shopping', color: 'rose' },
+        rent_bills: { ml: 'വീട്ടുവാടക & ബില്ലുകൾ (KSEB, Water)', en: 'Rent & Utilities', icon: 'fa-house-chimney', color: 'orange' },
+        travel_fuel: { ml: 'യാത്ര & ഇന്ധനം (പെട്രോൾ/ഡീസൽ)', en: 'Travel & Fuel', icon: 'fa-gas-pump', color: 'amber' },
+        dining: { ml: 'ഹോട്ടൽ ഭക്ഷണം & ചായ', en: 'Dining & Snacks', icon: 'fa-utensils', color: 'yellow' },
+        medical: { ml: 'ചികിത്സ & മരുന്നുകൾ', en: 'Medical & Healthcare', icon: 'fa-stethoscope', color: 'red' },
+        education: { ml: 'വിദ്യാഭ്യാസം & ഫീസ്', en: 'Education & Fees', icon: 'fa-graduation-cap', color: 'blue' },
+        shopping: { ml: 'വസ്ത്രങ്ങൾ & ഷോപ്പിംഗ്', en: 'Shopping & Clothes', icon: 'fa-bag-shopping', color: 'pink' },
+        recharge: { ml: 'മൊബൈൽ & ഇന്റർനെറ്റ് റീചാർജ്', en: 'Mobile & Internet', icon: 'fa-wifi', color: 'violet' },
+        stock_inventory: { ml: 'കടയിലേക്ക് സാധനങ്ങൾ വാങ്ങൽ', en: 'Business Stock Purchase', icon: 'fa-boxes-packing', color: 'sky' },
+        maintenance: { ml: 'അറ്റകുറ്റപ്പണി & സർവീസ്', en: 'Repairs & Maintenance', icon: 'fa-wrench', color: 'zinc' },
+        emi_loan: { ml: 'വായ്പ തിരിച്ചടവ് / EMI', en: 'Loan EMI & Debts', icon: 'fa-credit-card', color: 'red' },
+        charity: { ml: 'ധർമ്മം & സംഭാവന', en: 'Charity & Donation', icon: 'fa-hand-holding-heart', color: 'emerald' },
+        entertainment: { ml: 'വിനോദം & ഔട്ടിംഗ്', en: 'Entertainment & Outing', icon: 'fa-film', color: 'purple' },
+        other_expense: { ml: 'മറ്റ് ചിലവുകൾ', en: 'Other Expense', icon: 'fa-receipt', color: 'slate' }
+      }
+    };
+
+    const PAYMENT_METHODS = {
+      upi: { ml: 'Google Pay / UPI', en: 'Google Pay / UPI', icon: 'fa-mobile-screen' },
+      cash: { ml: 'പണം (Cash)', en: 'Cash', icon: 'fa-money-bill-1' },
+      bank: { ml: 'ബാങ്ക് ട്രാൻസ്ഫർ (Bank)', en: 'Bank Transfer', icon: 'fa-building-columns' },
+      card: { ml: 'ഡെബിറ്റ് / ക്രെഡിറ്റ് കാർഡ്', en: 'Debit / Credit Card', icon: 'fa-credit-card' },
+      cheque: { ml: 'ചെക്ക് (Cheque)', en: 'Cheque', icon: 'fa-money-check' }
+    };
+
+    // Realistic 2026 Sample Dataset
+    const DEFAULT_TRANSACTIONS = [
+      { id: 'TXN-2026-042', type: 'expense', amount: 2350, date: '2026-10-18', time: '11:15', category: 'rent_bills', paymentMethod: 'upi', party: 'KSEB Kerala', description: 'കെ.എസ്.ഇ.ബി ഇലക്ട്രിസിറ്റി ബിൽ ഒക്ടോബർ', reference: 'UPI-99482104', tags: ['#Bills', '#Home'], status: 'completed' },
+      { id: 'TXN-2026-041', type: 'income', amount: 18500, date: '2026-10-17', time: '21:30', category: 'business', paymentMethod: 'cash', party: 'സൂപ്പർ മാർക്കറ്റ് കളക്ഷൻ', description: 'ശനിയാഴ്ചത്തെ പ്രതിദിന കളക്ഷൻ തുക', reference: 'CASH-REC-1017', tags: ['#Shop', '#DailySales'], status: 'completed' },
+      { id: 'TXN-2026-040', type: 'expense', amount: 1420, date: '2026-10-17', time: '08:45', category: 'groceries', paymentMethod: 'cash', party: 'ചന്തപ്പടി മാർക്കറ്റ്', description: 'പച്ചക്കറിയും മീനും വാങ്ങി (അയില, തക്കാളി, വെണ്ട)', reference: '', tags: ['#Food', '#Home'], status: 'completed' },
+      { id: 'TXN-2026-039', type: 'expense', amount: 4000, date: '2026-10-16', time: '16:20', category: 'travel_fuel', paymentMethod: 'card', party: 'ഇന്ത്യൻ ഓയിൽ പമ്പ്', description: 'കാർ പെട്രോൾ ഫുൾ ടാങ്ക് അടിച്ചത്', reference: 'CARD-TXN-8821', tags: ['#Vehicle'], status: 'completed' },
+      { id: 'TXN-2026-038', type: 'income', amount: 12000, date: '2026-10-15', time: '10:00', category: 'rent_income', paymentMethod: 'upi', party: 'മുഹമ്മദ് കുട്ടി (വാടകക്കാരൻ)', description: 'ഒക്ടോബർ മാസത്തെ തറവാട് വീട്ടുവാടക', reference: 'UPI-77189923', tags: ['#Rent', '#Monthly'], status: 'completed' },
+      { id: 'TXN-2026-037', type: 'expense', amount: 1860, date: '2026-10-14', time: '19:40', category: 'medical', paymentMethod: 'upi', party: 'സിറ്റി മെഡിക്കൽസ്', description: 'ബി.പി മരുന്നുകളും വിറ്റാമിൻ ഗുളികകളും', reference: 'UPI-11928482', tags: ['#Health'], status: 'completed' },
+      { id: 'TXN-2026-036', type: 'expense', amount: 825, date: '2026-10-13', time: '14:10', category: 'recharge', paymentMethod: 'upi', party: 'Jio Fiber', description: 'പ്രതിമാസ ഫൈബർ ഇന്റർനെറ്റ് റീചാർജ്', reference: 'JIO-PAY-4410', tags: ['#WiFi', '#Work'], status: 'completed' },
+      { id: 'TXN-2026-035', type: 'income', amount: 15000, date: '2026-10-12', time: '15:30', category: 'freelance', paymentMethod: 'bank', party: 'കോഴിക്കോട് ക്ലയന്റ്', description: 'വെബ്സൈറ്റ് ഡിസൈൻ അഡ്വാൻസ് പേയ്മെന്റ്', reference: 'NEFT-55418820', tags: ['#Freelance', '#Project'], status: 'completed' },
+      { id: 'TXN-2026-034', type: 'expense', amount: 2150, date: '2026-10-11', time: '20:15', category: 'dining', paymentMethod: 'card', party: 'പാരഗൺ റെസ്റ്റോറന്റ്', description: 'കുടുംബത്തോടൊപ്പം ബിരിയാണി & ഡിന്നർ', reference: 'POS-REC-0021', tags: ['#Family', '#Food'], status: 'completed' },
+      { id: 'TXN-2026-033', type: 'expense', amount: 6850, date: '2026-10-10', time: '11:00', category: 'groceries', paymentMethod: 'upi', party: 'സപ്ലൈകോ പീപ്പിൾസ് ബസാർ', description: 'മാസ പലചരക്ക് സാധനങ്ങൾ (അരി, എണ്ണ, പഞ്ചസാര)', reference: 'UPI-66299101', tags: ['#Groceries', '#Monthly'], status: 'completed' },
+      { id: 'TXN-2026-032', type: 'income', amount: 65000, date: '2026-10-01', time: '09:30', category: 'salary', paymentMethod: 'bank', party: 'കമ്പനി ഓഫീസ്', description: 'സെപ്റ്റംബർ മാസത്തെ ശമ്പളം അക്കൗണ്ടിൽ ക്രെഡിറ്റ് ആയി', reference: 'SAL-NEFT-202610', tags: ['#Salary', '#Monthly'], status: 'completed' },
+      { id: 'TXN-2026-031', type: 'expense', amount: 14000, date: '2026-10-02', time: '10:30', category: 'rent_bills', paymentMethod: 'bank', party: 'ഉടമസ്ഥൻ ശ്രീധരൻ', description: 'ഈ മാസത്തെ വീട്ടുവാടക നൽകിയത്', reference: 'IMPS-9921443', tags: ['#Rent', '#Home'], status: 'completed' },
+      { id: 'TXN-2026-030', type: 'expense', amount: 8900, date: '2026-10-05', time: '04:00', category: 'emi_loan', paymentMethod: 'bank', party: 'SBI കാർ ലോൺ', description: 'കാർ ലോൺ പ്രതിമാസ EMI ഓട്ടോ ഡെബിറ്റ്', reference: 'ACH-SBI-8921', tags: ['#EMI', '#AutoDebit'], status: 'completed' },
+      { id: 'TXN-2026-029', type: 'income', amount: 65000, date: '2026-09-01', time: '09:30', category: 'salary', paymentMethod: 'bank', party: 'കമ്പനി ഓഫീസ്', description: 'ഓഗസ്റ്റ് മാസത്തെ ശമ്പളം', reference: 'SAL-NEFT-202609', tags: ['#Salary'], status: 'completed' },
+      { id: 'TXN-2026-028', type: 'expense', amount: 14000, date: '2026-09-02', time: '11:00', category: 'rent_bills', paymentMethod: 'bank', party: 'ഉടമസ്ഥൻ ശ്രീധരൻ', description: 'വീട്ടുവാടക നൽകിയത്', reference: 'IMPS-881233', tags: ['#Rent'], status: 'completed' },
+      { id: 'TXN-2026-027', type: 'expense', amount: 8900, date: '2026-09-05', time: '04:00', category: 'emi_loan', paymentMethod: 'bank', party: 'SBI കാർ ലോൺ', description: 'കാർ ലോൺ EMI', reference: 'ACH-SBI-7711', tags: ['#EMI'], status: 'completed' },
+      { id: 'TXN-2026-026', type: 'expense', amount: 4800, date: '2026-09-12', time: '17:30', category: 'shopping', paymentMethod: 'card', party: 'കല്യാൺ സിൽക്സ്', description: 'ഓണം ഡ്രസ്സ് പർച്ചേസ്', reference: 'CARD-TXN-1209', tags: ['#Onam', '#Shopping'], status: 'completed' },
+      { id: 'TXN-2026-025', type: 'expense', amount: 12500, date: '2026-09-15', time: '10:00', category: 'education', paymentMethod: 'bank', party: 'മോഡൽ പബ്ലിക് സ്കൂൾ', description: 'രണ്ടാം ടേം സ്കൂൾ ഫീസും ബസ് ഫീസും', reference: 'SCH-FEE-2026', tags: ['#School', '#Kids'], status: 'completed' },
+      { id: 'TXN-2026-024', type: 'income', amount: 8750, date: '2026-09-20', time: '16:00', category: 'agriculture', paymentMethod: 'cash', party: 'കുഞ്ഞഹമ്മദ് (റബ്ബർ ഡീലർ)', description: 'റബ്ബർ ഷീറ്റും തേങ്ങയും വിറ്റ വരുമാനം', reference: '', tags: ['#Farm', '#Coconut'], status: 'completed' },
+      { id: 'TXN-2026-023', type: 'income', amount: 3400, date: '2026-09-25', time: '12:00', category: 'interest', paymentMethod: 'bank', party: 'ഫെഡറൽ ബാങ്ക്', description: 'ബാങ്ക് സ്ഥിരനിക്ഷേപ പലിശ (FD Interest)', reference: 'FD-INT-992', tags: ['#Interest'], status: 'completed' },
+      { id: 'TXN-2026-022', type: 'expense', amount: 1650, date: '2026-09-28', time: '15:45', category: 'maintenance', paymentMethod: 'upi', party: 'ഹോണ്ട സർവീസ് സെന്റർ', description: 'സ്കൂട്ടർ സർവീസ് & എൻജിൻ ഓയിൽ ചേഞ്ച്', reference: 'UPI-HONDA-11', tags: ['#Bike'], status: 'completed' },
+      { id: 'TXN-2026-021', type: 'income', amount: 65000, date: '2026-08-01', time: '09:30', category: 'salary', paymentMethod: 'bank', party: 'കമ്പനി ഓഫീസ്', description: 'ജൂലൈ മാസത്തെ ശമ്പളം', reference: 'SAL-NEFT-202608', tags: ['#Salary'], status: 'completed' },
+      { id: 'TXN-2026-020', type: 'expense', amount: 14000, date: '2026-08-02', time: '10:00', category: 'rent_bills', paymentMethod: 'bank', party: 'ഉടമസ്ഥൻ ശ്രീധരൻ', description: 'വീട്ടുവാടക', reference: 'IMPS-771122', tags: ['#Rent'], status: 'completed' },
+      { id: 'TXN-2026-019', type: 'expense', amount: 2000, date: '2026-08-08', time: '14:00', category: 'charity', paymentMethod: 'upi', party: 'യതീംഖാന റിലീഫ് ഫണ്ട്', description: 'മാസാന്ത സംഭാവന (Charity Donation)', reference: 'UPI-CHARITY-09', tags: ['#Charity'], status: 'completed' },
+      { id: 'TXN-2026-018', type: 'expense', amount: 5900, date: '2026-08-14', time: '18:20', category: 'groceries', paymentMethod: 'upi', party: 'സപ്ലൈകോ', description: 'മാസ പലചരക്ക് സാധനങ്ങൾ', reference: 'UPI-SUPPLY-88', tags: ['#Groceries'], status: 'completed' },
+      { id: 'TXN-2026-017', type: 'income', amount: 22000, date: '2026-08-20', time: '11:30', category: 'business', paymentMethod: 'bank', party: 'സ്റ്റോക്ക് സെയിൽസ്', description: 'മൊത്തക്കച്ചവട വിൽപ്പന ലാഭം', reference: 'NEFT-WHOLE-44', tags: ['#Business'], status: 'completed' },
+      { id: 'TXN-2026-016', type: 'expense', amount: 950, date: '2026-08-22', time: '16:00', category: 'maintenance', paymentMethod: 'cash', party: 'പ്ലംബർ സുരേഷ്', description: 'ബാത്ത്റൂം പൈപ്പ് ലീക്ക് നന്നാക്കിയത്', reference: '', tags: ['#Repair'], status: 'completed' },
+      { id: 'TXN-2026-015', type: 'income', amount: 65000, date: '2026-07-01', time: '09:30', category: 'salary', paymentMethod: 'bank', party: 'കമ്പനി ഓഫീസ്', description: 'ജൂൺ മാസത്തെ ശമ്പളം', reference: 'SAL-NEFT-202607', tags: ['#Salary'], status: 'completed' },
+      { id: 'TXN-2026-014', type: 'expense', amount: 14000, date: '2026-07-02', time: '10:00', category: 'rent_bills', paymentMethod: 'bank', party: 'ഉടമസ്ഥൻ ശ്രീധരൻ', description: 'വീട്ടുവാടക', reference: 'IMPS-661199', tags: ['#Rent'], status: 'completed' },
+      { id: 'TXN-2026-013', type: 'expense', amount: 2100, date: '2026-07-10', time: '12:15', category: 'rent_bills', paymentMethod: 'upi', party: 'KSEB', description: 'വൈദ്യുതി ബിൽ അടച്ചത്', reference: 'UPI-KSEB-0710', tags: ['#Bills'], status: 'completed' },
+      { id: 'TXN-2026-012', type: 'income', amount: 5000, date: '2026-07-18', time: '17:00', category: 'loan_return', paymentMethod: 'upi', party: 'ഷഫീഖ് (സുഹൃത്ത്)', description: 'നേരത്തെ കടം വാങ്ങിയ തുക തിരികെ നൽകിയത്', reference: 'UPI-SHAF-001', tags: ['#LoanReturn'], status: 'completed' },
+      { id: 'TXN-2026-011', type: 'income', amount: 65000, date: '2026-06-01', time: '09:30', category: 'salary', paymentMethod: 'bank', party: 'കമ്പനി ഓഫീസ്', description: 'മെയ് മാസത്തെ ശമ്പളം', reference: 'SAL-NEFT-202606', tags: ['#Salary'], status: 'completed' },
+      { id: 'TXN-2026-010', type: 'expense', amount: 14000, date: '2026-06-02', time: '10:00', category: 'rent_bills', paymentMethod: 'bank', party: 'ഉടമസ്ഥൻ ശ്രീധരൻ', description: 'വീട്ടുവാടക', reference: 'IMPS-551100', tags: ['#Rent'], status: 'completed' },
+      { id: 'TXN-2026-009', type: 'expense', amount: 18500, date: '2026-06-05', time: '11:00', category: 'education', paymentMethod: 'bank', party: 'സ്കൂൾ & ട്യൂഷൻ സെന്റർ', description: 'പുതിയ അധ്യയന വർഷത്തെ പുസ്തകങ്ങളും ഫീസും', reference: 'NEFT-SCH-2026', tags: ['#Education', '#School'], status: 'completed' },
+      { id: 'TXN-2026-008', type: 'expense', amount: 3500, date: '2026-06-15', time: '16:00', category: 'travel_fuel', paymentMethod: 'upi', party: 'പെട്രോൾ പമ്പ്', description: 'ഇന്ധനം നിറച്ചത്', reference: 'UPI-PET-991', tags: ['#Fuel'], status: 'completed' },
+      { id: 'TXN-2026-007', type: 'income', amount: 65000, date: '2026-05-01', time: '09:30', category: 'salary', paymentMethod: 'bank', party: 'കമ്പനി ഓഫീസ്', description: 'ഏപ്രിൽ മാസ ശമ്പളം', reference: 'SAL-NEFT-202605', tags: ['#Salary'], status: 'completed' },
+      { id: 'TXN-2026-006', type: 'expense', amount: 14000, date: '2026-05-02', time: '10:00', category: 'rent_bills', paymentMethod: 'bank', party: 'ഉടമസ്ഥൻ ശ്രീധരൻ', description: 'വീട്ടുവാടക', reference: 'IMPS-441199', tags: ['#Rent'], status: 'completed' },
+      { id: 'TXN-2026-005', type: 'expense', amount: 8900, date: '2026-05-05', time: '04:00', category: 'emi_loan', paymentMethod: 'bank', party: 'SBI കാർ ലോൺ', description: 'കാർ ലോൺ EMI', reference: 'ACH-SBI-5511', tags: ['#EMI'], status: 'completed' },
+      { id: 'TXN-2026-004', type: 'income', amount: 28000, date: '2026-05-18', time: '14:30', category: 'other_income', paymentMethod: 'cash', party: 'ബൈക്ക് ബയർ റിയാസ്', description: 'പഴയ ബൈക്ക് വിറ്റ തുക', reference: 'CASH-BIKE-SALE', tags: ['#Sale', '#Vehicle'], status: 'completed' },
+      { id: 'TXN-2026-003', type: 'income', amount: 65000, date: '2026-04-01', time: '09:30', category: 'salary', paymentMethod: 'bank', party: 'കമ്പനി ഓഫീസ്', description: 'മാർച്ച് മാസ ശമ്പളം', reference: 'SAL-NEFT-202604', tags: ['#Salary'], status: 'completed' },
+      { id: 'TXN-2026-002', type: 'expense', amount: 14000, date: '2026-04-02', time: '10:00', category: 'rent_bills', paymentMethod: 'bank', party: 'ഉടമസ്ഥൻ ശ്രീധരൻ', description: 'വീട്ടുവാടക', reference: 'IMPS-331188', tags: ['#Rent'], status: 'completed' },
+      { id: 'TXN-2026-001', type: 'income', amount: 50000, date: '2026-01-01', time: '10:00', category: 'other_income', paymentMethod: 'bank', party: 'തുടക്ക ബാലൻസ്', description: '2026 വർഷാരംഭ നീക്കിയിരിപ്പ് തുക (Opening Balance)', reference: 'OPENING-2026', tags: ['#OpeningBalance'], status: 'completed' }
+    ];
+
+    let transactions = [];
+    let currentLang = localStorage.getItem('varavu_chilavu_lang') || 'ml';
+    let currentFilterType = 'all';
+    let charts = {};
+
+    document.addEventListener('DOMContentLoaded', function() {
+      initTheme();
+      initData();
+      initUI();
+      populateCategorySelects();
+      updateAllViews();
+    });
+
+    function initTheme() {
+      var savedTheme = localStorage.getItem('varavu_chilavu_theme') || 'light';
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.getElementById('themeIcon').classList.replace('fa-moon', 'fa-sun');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.getElementById('themeIcon').classList.replace('fa-sun', 'fa-moon');
+      }
+    }
+
+    function toggleTheme() {
+      var isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('varavu_chilavu_theme', isDark ? 'dark' : 'light');
+      var icon = document.getElementById('themeIcon');
+      if (isDark) {
+        icon.classList.replace('fa-moon', 'fa-sun');
+      } else {
+        icon.classList.replace('fa-sun', 'fa-moon');
+      }
+      renderCharts();
+    }
+
+    function initData() {
+      var stored = localStorage.getItem('varavu_chilavu_data_v1');
+      if (stored) {
+        try {
+          transactions = JSON.parse(stored);
+        } catch (e) {
+          transactions = DEFAULT_TRANSACTIONS.slice();
+        }
+      } else {
+        transactions = DEFAULT_TRANSACTIONS.slice();
+        saveData();
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem('varavu_chilavu_data_v1', JSON.stringify(transactions));
+    }
+
+    var I18N = {
+      ml: {
+        app_tagline: 'സമ്പൂർണ്ണ ദൈനംദിന കണക്ക് പുസ്തകം (Smart Cashbook & Ledger)',
+        add_income: '+ വരവ്',
+        add_expense: '- ചിലവ്',
+        nav_dashboard: 'ഡാഷ്‌ബോർഡ്',
+        nav_transactions: 'ഇടപാടുകൾ (All Data)',
+        nav_daybook: 'ഡേ ബുക്ക് (Daybook)',
+        nav_analytics: 'വിശകലനം & ചാർട്ടുകൾ',
+        nav_statement: 'സ്റ്റേറ്റ്മെന്റ് & പ്രിന്റ്',
+        total_income: 'ആകെ വരവ് (Income)',
+        total_expense: 'ആകെ ചിലവ് (Expense)',
+        net_balance: 'നീക്കിയിരിപ്പ് (Balance)',
+        today_summary: 'ഇന്നത്തെ കണക്ക്',
+        monthly_trend_title: 'വരവ് vs ചിലവ് പ്രതിമാസ താരതമ്യം',
+        category_chart_title: 'ചിലവ് വിഭാഗങ്ങൾ',
+        recent_transactions: 'ഏറ്റവും പുതിയ ഇടപാടുകൾ',
+        view_all: 'എല്ലാം കാണുക',
+        filter_all: 'എല്ലാം',
+        filter_income: 'വരവ് മാത്രം',
+        filter_expense: 'ചിലവ് മാത്രം',
+        export_excel: 'Excel / CSV ഡൗൺലോഡ്',
+        backup_json: 'ബാക്കപ്പ് ഡൗൺലോഡ് (JSON)',
+        restore_json: 'ബാക്കപ്പ് റീസ്റ്റോർ (Restore)',
+        print_statement: 'റിപ്പോർട്ട് പ്രിന്റ് / PDF',
+        reset_sample: 'സാംപിൾ ഡാറ്റ വീണ്ടെടുക്കുക',
+        clear_all: 'എല്ലാ ഡാറ്റയും മായ്ക്കുക',
+        daybook_title: 'ദൈനംദിന ഡേ ബുക്ക് (Daily Cashbook)',
+        statement_title: 'ഔദ്യോഗിക അക്കൗണ്ട് സ്റ്റേറ്റ്മെന്റ്'
+      },
+      en: {
+        app_tagline: 'Complete Daily Income & Expense Ledger (Cashbook)',
+        add_income: '+ Income',
+        add_expense: '- Expense',
+        nav_dashboard: 'Dashboard',
+        nav_transactions: 'Transactions',
+        nav_daybook: 'Daybook',
+        nav_analytics: 'Analytics & Charts',
+        nav_statement: 'Statement & Print',
+        total_income: 'Total Income',
+        total_expense: 'Total Expense',
+        net_balance: 'Net Balance',
+        today_summary: "Today's Summary",
+        monthly_trend_title: 'Monthly Income vs Expense Trend',
+        category_chart_title: 'Expense Categories',
+        recent_transactions: 'Recent Transactions',
+        view_all: 'View All',
+        filter_all: 'All',
+        filter_income: 'Income Only',
+        filter_expense: 'Expense Only',
+        export_excel: 'Export to Excel / CSV',
+        backup_json: 'Download Backup (JSON)',
+        restore_json: 'Restore Backup (JSON)',
+        print_statement: 'Print Statement / PDF',
+        reset_sample: 'Reset to Sample Data',
+        clear_all: 'Clear All Data',
+        daybook_title: 'Daily Cashbook & Daybook',
+        statement_title: 'Official Account Statement'
+      }
+    };
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'ml' ? 'en' : 'ml';
+      localStorage.setItem('varavu_chilavu_lang', currentLang);
+      applyLanguage();
+      populateCategorySelects();
+      updateAllViews();
+    }
+
+    function applyLanguage() {
+      document.getElementById('currentLangLabel').innerText = currentLang === 'ml' ? 'English' : 'മലയാളം';
+      var dict = I18N[currentLang];
+      document.querySelectorAll('.lang-text').forEach(function(el) {
+        var key = el.getAttribute('data-key');
+        if (dict[key]) el.innerText = dict[key];
+      });
+      document.getElementById('app-tagline').innerText = dict['app_tagline'];
+    }
+
+    function populateCategorySelects() {
+      var filterCat = document.getElementById('filterCategory');
+      var currentSelected = filterCat.value;
+      filterCat.innerHTML = '<option value="all">' + (currentLang === 'ml' ? 'എല്ലാ വിഭാഗങ്ങളും' : 'All Categories') + '</option>';
+      
+      var optGroupInc = document.createElement('optgroup');
+      optGroupInc.label = currentLang === 'ml' ? '── വരവ് വിഭാഗങ്ങൾ ──' : '── Income Categories ──';
+      Object.keys(CATEGORIES.income).forEach(function(k) {
+        var opt = document.createElement('option');
+        opt.value = k;
+        opt.innerText = CATEGORIES.income[k][currentLang];
+        optGroupInc.appendChild(opt);
+      });
+      filterCat.appendChild(optGroupInc);
+
+      var optGroupExp = document.createElement('optgroup');
+      optGroupExp.label = currentLang === 'ml' ? '── ചിലവ് വിഭാഗങ്ങൾ ──' : '── Expense Categories ──';
+      Object.keys(CATEGORIES.expense).forEach(function(k) {
+        var opt = document.createElement('option');
+        opt.value = k;
+        opt.innerText = CATEGORIES.expense[k][currentLang];
+        optGroupExp.appendChild(opt);
+      });
+      filterCat.appendChild(optGroupExp);
+      filterCat.value = currentSelected || 'all';
+    }
+
+    function updateModalCategoryOptions(type, selectedKey) {
+      selectedKey = selectedKey || '';
+      var catSelect = document.getElementById('txnCategory');
+      catSelect.innerHTML = '';
+      var list = CATEGORIES[type] || {};
+      Object.keys(list).forEach(function(key) {
+        var opt = document.createElement('option');
+        opt.value = key;
+        opt.innerText = list[key][currentLang];
+        if (key === selectedKey) opt.selected = true;
+        catSelect.appendChild(opt);
+      });
+    }
+
+    function switchView(viewName) {
+      var views = ['dashboard', 'transactions', 'daybook', 'analytics', 'statement'];
+      views.forEach(function(v) {
+        var el = document.getElementById('view-' + v);
+        var tab = document.getElementById('tab-' + v);
+        if (v === viewName) {
+          el.classList.remove('hidden');
+          tab.classList.add('active-tab', 'bg-emerald-100/70', 'text-emerald-800', 'dark:bg-emerald-950/80', 'dark:text-emerald-300');
+          tab.classList.remove('text-slate-600', 'dark:text-slate-400');
+        } else {
+          el.classList.add('hidden');
+          tab.classList.remove('active-tab', 'bg-emerald-100/70', 'text-emerald-800', 'dark:bg-emerald-950/80', 'dark:text-emerald-300');
+          tab.classList.add('text-slate-600', 'dark:text-slate-400');
+        }
+      });
+
+      if (viewName === 'analytics') {
+        setTimeout(renderAnalyticsView, 50);
+      } else if (viewName === 'daybook') {
+        renderDaybook();
+      } else if (viewName === 'statement') {
+        renderStatement();
+      } else if (viewName === 'dashboard') {
+        setTimeout(renderCharts, 50);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function formatMoney(amount) {
+      var num = Number(amount || 0);
+      return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      var parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      var d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      
+      if (currentLang === 'ml') {
+        var mlMonths = ['ജനുവരി', 'ഫെബ്രുവരി', 'മാർച്ച്', 'ഏപ്രിൽ', 'മെയ്', 'ജൂൺ', 'ജൂലൈ', 'ഓഗസ്റ്റ്', 'സെപ്റ്റംബർ', 'ഒക്ടോബർ', 'നവംബർ', 'ഡിസംബർ'];
+        return d.getDate() + ' ' + mlMonths[d.getMonth()] + ' ' + d.getFullYear();
+      } else {
+        var enMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return d.getDate() + ' ' + enMonths[d.getMonth()] + ' ' + d.getFullYear();
+      }
+    }
+
+    function getCategoryInfo(type, key) {
+      if (CATEGORIES[type] && CATEGORIES[type][key]) {
+        return CATEGORIES[type][key];
+      }
+      var otherType = type === 'income' ? 'expense' : 'income';
+      if (CATEGORIES[otherType] && CATEGORIES[otherType][key]) {
+        return CATEGORIES[otherType][key];
+      }
+      return { ml: key, en: key, icon: 'fa-circle-dot', color: 'slate' };
+    }
+
+    function getPaymentInfo(key) {
+      return PAYMENT_METHODS[key] || { ml: key, en: key, icon: 'fa-money-bill' };
+    }
+
+    function updateAllViews() {
+      applyLanguage();
+      renderKPIs();
+      renderRecentTransactions();
+      applyFilters();
+      renderCharts();
+    }
+
+    function renderKPIs() {
+      var totalIncome = 0;
+      var totalExpense = 0;
+      var incomeCount = 0;
+      var expenseCount = 0;
+
+      var now = new Date();
+      var todayStr = now.toISOString().split('T')[0];
+      var thisMonthPrefix = todayStr.substring(0, 7);
+
+      var thisMonthIncome = 0;
+      var thisMonthExpense = 0;
+
+      var todayIncome = 0;
+      var todayExpense = 0;
+
+      transactions.forEach(function(t) {
+        var amt = Number(t.amount || 0);
+        if (t.type === 'income') {
+          totalIncome += amt;
+          incomeCount++;
+          if (t.date && t.date.startsWith(thisMonthPrefix)) thisMonthIncome += amt;
+          if (t.date === todayStr) todayIncome += amt;
+        } else {
+          totalExpense += amt;
+          expenseCount++;
+          if (t.date && t.date.startsWith(thisMonthPrefix)) thisMonthExpense += amt;
+          if (t.date === todayStr) todayExpense += amt;
+        }
+      });
+
+      var netBalance = totalIncome - totalExpense;
+      var savingsRate = totalIncome > 0 ? ((netBalance / totalIncome) * 100).toFixed(1) : 0;
+
+      document.getElementById('statTotalIncome').innerText = formatMoney(totalIncome);
+      document.getElementById('statIncomeCount').innerText = currentLang === 'ml' ? (incomeCount + ' വരവുകൾ') : (incomeCount + ' entries');
+      document.getElementById('statThisMonthIncome').innerText = currentLang === 'ml' ? ('ഈ മാസം ' + formatMoney(thisMonthIncome)) : ('This Mo: ' + formatMoney(thisMonthIncome));
+
+      document.getElementById('statTotalExpense').innerText = formatMoney(totalExpense);
+      document.getElementById('statExpenseCount').innerText = currentLang === 'ml' ? (expenseCount + ' ചിലവുകൾ') : (expenseCount + ' entries');
+      document.getElementById('statThisMonthExpense').innerText = currentLang === 'ml' ? ('ഈ മാസം ' + formatMoney(thisMonthExpense)) : ('This Mo: ' + formatMoney(thisMonthExpense));
+
+      var netEl = document.getElementById('statNetBalance');
+      netEl.innerText = formatMoney(netBalance);
+      if (netBalance >= 0) {
+        netEl.className = 'text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight';
+        document.getElementById('balanceStatusBadge').innerText = currentLang === 'ml' ? 'സുരക്ഷിതം (Surplus)' : 'Surplus';
+        document.getElementById('balanceStatusBadge').className = 'font-bold text-emerald-600 dark:text-emerald-400';
+      } else {
+        netEl.className = 'text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400 tracking-tight';
+        document.getElementById('balanceStatusBadge').innerText = currentLang === 'ml' ? 'കമ്മി (Deficit)' : 'Deficit';
+        document.getElementById('balanceStatusBadge').className = 'font-bold text-rose-600 dark:text-rose-400';
+      }
+      document.getElementById('statSavingsRate').innerText = savingsRate + '% ' + (currentLang === 'ml' ? 'നീക്കിയിരിപ്പ്' : 'Savings');
+
+      document.getElementById('statTodayIncome').innerText = formatMoney(todayIncome);
+      document.getElementById('statTodayExpense').innerText = formatMoney(todayExpense);
+      var todayNet = todayIncome - todayExpense;
+      var todayNetEl = document.getElementById('statTodayNet');
+      todayNetEl.innerText = formatMoney(todayNet);
+      todayNetEl.className = todayNet >= 0 ? 'font-black text-emerald-600' : 'font-black text-rose-600';
+
+      document.getElementById('tabTxnCountBadge').innerText = transactions.length;
+    }
+
+    function renderRecentTransactions() {
+      var tbody = document.getElementById('recentTransactionsTableBody');
+      tbody.innerHTML = '';
+      
+      var sorted = transactions.slice().sort(function(a, b) {
+        return (b.date + ' ' + (b.time || '')) > (a.date + ' ' + (a.time || '')) ? 1 : -1;
+      }).slice(0, 8);
+      
+      sorted.forEach(function(t) {
+        var cat = getCategoryInfo(t.type, t.category);
+        var pay = getPaymentInfo(t.paymentMethod);
+        var isIncome = t.type === 'income';
+
+        var tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition-colors';
+        tr.innerHTML = 
+          '<td class="px-3 py-3">' +
+            '<div class="font-bold text-slate-800 dark:text-slate-200">' + formatDate(t.date) + '</div>' +
+            '<div class="text-[11px] text-slate-400">' + (t.time || '12:00') + '</div>' +
+          '</td>' +
+          '<td class="px-3 py-3">' +
+            '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ' + (isIncome ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300') + '">' +
+              '<i class="fa-solid ' + (isIncome ? 'fa-arrow-down-left mr-1' : 'fa-arrow-up-right mr-1') + '"></i>' +
+              (isIncome ? (currentLang === 'ml' ? 'വരവ്' : 'Income') : (currentLang === 'ml' ? 'ചിലവ്' : 'Expense')) +
+            '</span>' +
+          '</td>' +
+          '<td class="px-3 py-3">' +
+            '<div class="font-bold text-slate-900 dark:text-white line-clamp-1">' + t.description + '</div>' +
+            '<div class="text-xs text-slate-500 line-clamp-1">' + (t.party || '-') + '</div>' +
+          '</td>' +
+          '<td class="px-3 py-3">' +
+            '<div class="inline-flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">' +
+              '<i class="fa-solid ' + cat.icon + ' text-' + cat.color + '-500"></i>' +
+              '<span>' + cat[currentLang] + '</span>' +
+            '</div>' +
+          '</td>' +
+          '<td class="px-3 py-3 text-xs text-slate-600 dark:text-slate-400">' +
+            '<i class="fa-solid ' + pay.icon + ' mr-1 text-slate-400"></i>' + pay[currentLang] +
+          '</td>' +
+          '<td class="px-3 py-3 text-right font-black ' + (isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400') + '">' +
+            (isIncome ? '+' : '-') + formatMoney(t.amount) +
+          '</td>' +
+          '<td class="px-3 py-3 text-center">' +
+            '<button onclick="viewVoucher(\'' + t.id + '\')" class="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800" title="View Detail">' +
+              '<i class="fa-solid fa-eye text-sm"></i>' +
+            '</button>' +
+          '</td>';
+        tbody.appendChild(tr);
+      });
+    }
+
+    function setTypeFilter(type) {
+      currentFilterType = type;
+      ['all', 'income', 'expense'].forEach(function(t) {
+        var btn = document.getElementById('btnFilter' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (t === type) {
+          btn.className = 'filter-type-btn active px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm';
+        } else {
+          btn.className = 'filter-type-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-900/50';
+        }
+      });
+      applyFilters();
+    }
+
+    function handleDatePresetChange() {
+      var preset = document.getElementById('filterDatePreset').value;
+      var customBox = document.getElementById('customDateRangeBox');
+      if (preset === 'custom') {
+        customBox.classList.remove('hidden');
+      } else {
+        customBox.classList.add('hidden');
+      }
+      applyFilters();
+    }
+
+    function resetFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('filterCategory').value = 'all';
+      document.getElementById('filterPayment').value = 'all';
+      document.getElementById('filterDatePreset').value = 'all';
+      document.getElementById('sortSelector').value = 'date_desc';
+      document.getElementById('customDateRangeBox').classList.add('hidden');
+      setTypeFilter('all');
+    }
+
+    function applyFilters() {
+      var query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      var catFilter = document.getElementById('filterCategory').value;
+      var payFilter = document.getElementById('filterPayment').value;
+      var datePreset = document.getElementById('filterDatePreset').value;
+      var sortBy = document.getElementById('sortSelector').value;
+
+      var now = new Date();
+      var todayStr = now.toISOString().split('T')[0];
+
+      var filtered = transactions.filter(function(t) {
+        if (currentFilterType !== 'all' && t.type !== currentFilterType) return false;
+        if (catFilter !== 'all' && t.category !== catFilter) return false;
+        if (payFilter !== 'all' && t.paymentMethod !== payFilter) return false;
+
+        if (query) {
+          var matchDesc = (t.description || '').toLowerCase().includes(query);
+          var matchParty = (t.party || '').toLowerCase().includes(query);
+          var matchRef = (t.reference || '').toLowerCase().includes(query);
+          var matchTags = (t.tags || []).join(' ').toLowerCase().includes(query);
+          if (!matchDesc && !matchParty && !matchRef && !matchTags) return false;
+        }
+
+        if (datePreset === 'today') {
+          if (t.date !== todayStr) return false;
+        } else if (datePreset === 'yesterday') {
+          var y = new Date();
+          y.setDate(y.getDate() - 1);
+          if (t.date !== y.toISOString().split('T')[0]) return false;
+        } else if (datePreset === 'this_week') {
+          var weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          var weekAgoStr = weekAgo.toISOString().split('T')[0];
+          if (t.date < weekAgoStr || t.date > todayStr) return false;
+        } else if (datePreset === 'this_month') {
+          var prefix = todayStr.substring(0, 7);
+          if (!t.date.startsWith(prefix)) return false;
+        } else if (datePreset === 'last_month') {
+          var lm = new Date();
+          lm.setMonth(lm.getMonth() - 1);
+          var lmPrefix = lm.toISOString().split('T')[0].substring(0, 7);
+          if (!t.date.startsWith(lmPrefix)) return false;
+        } else if (datePreset === 'custom') {
+          var from = document.getElementById('filterFromDate').value;
+          var to = document.getElementById('filterToDate').value;
+          if (from && t.date < from) return false;
+          if (to && t.date > to) return false;
+        }
+
+        return true;
+      });
+
+      filtered.sort(function(a, b) {
+        if (sortBy === 'date_desc') return (b.date + ' ' + (b.time || '')) > (a.date + ' ' + (a.time || '')) ? 1 : -1;
+        if (sortBy === 'date_asc') return (a.date + ' ' + (a.time || '')) > (b.date + ' ' + (b.time || '')) ? 1 : -1;
+        if (sortBy === 'amount_desc') return Number(b.amount) - Number(a.amount);
+        if (sortBy === 'amount_asc') return Number(a.amount) - Number(b.amount);
+        return 0;
+      });
+
+      renderMasterTable(filtered);
+    }
+
+    function renderMasterTable(items) {
+      var tbody = document.getElementById('masterTransactionsTableBody');
+      var emptyState = document.getElementById('tableEmptyState');
+      tbody.innerHTML = '';
+
+      var filterInc = 0;
+      var filterExp = 0;
+
+      items.forEach(function(t) {
+        var amt = Number(t.amount || 0);
+        if (t.type === 'income') filterInc += amt;
+        else filterExp += amt;
+      });
+
+      document.getElementById('filteredCountBadge').innerText = items.length;
+      document.getElementById('filteredIncomeSum').innerText = formatMoney(filterInc);
+      document.getElementById('filteredExpenseSum').innerText = formatMoney(filterExp);
+      document.getElementById('filteredNetSum').innerText = formatMoney(filterInc - filterExp);
+
+      if (items.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+
+      items.forEach(function(t) {
+        var cat = getCategoryInfo(t.type, t.category);
+        var pay = getPaymentInfo(t.paymentMethod);
+        var isIncome = t.type === 'income';
+
+        var tagsHtml = '';
+        if (t.tags && t.tags.length > 0) {
+          tagsHtml = '<div class="flex gap-1 mt-1">' + t.tags.map(function(tag) {
+            return '<span class="px-1.5 py-0.2 bg-slate-100 dark:bg-slate-800 text-[10px] rounded text-slate-500 font-semibold">' + tag + '</span>';
+          }).join('') + '</div>';
+        }
+
+        var tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors';
+        tr.innerHTML = 
+          '<td class="px-4 py-3.5">' +
+            '<div class="font-bold text-slate-800 dark:text-slate-200">' + formatDate(t.date) + '</div>' +
+            '<div class="text-[11px] text-slate-400">' + (t.time || '12:00') + '</div>' +
+          '</td>' +
+          '<td class="px-4 py-3.5">' +
+            '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ' + (isIncome ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300') + '">' +
+              '<i class="fa-solid ' + (isIncome ? 'fa-arrow-down-left mr-1.5' : 'fa-arrow-up-right mr-1.5') + '"></i>' +
+              (isIncome ? (currentLang === 'ml' ? 'വരവ്' : 'Income') : (currentLang === 'ml' ? 'ചിലവ്' : 'Expense')) +
+            '</span>' +
+          '</td>' +
+          '<td class="px-4 py-3.5">' +
+            '<div class="font-black text-slate-900 dark:text-white text-sm">' + t.description + '</div>' +
+            '<div class="text-xs text-slate-500 font-medium">' + (t.party ? ('വ്യക്തി/സ്ഥാപനം: ' + t.party) : '') + '</div>' +
+            tagsHtml +
+          '</td>' +
+          '<td class="px-4 py-3.5">' +
+            '<div class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">' +
+              '<i class="fa-solid ' + cat.icon + ' text-' + cat.color + '-500"></i>' +
+              '<span>' + cat[currentLang] + '</span>' +
+            '</div>' +
+          '</td>' +
+          '<td class="px-4 py-3.5 text-xs text-slate-600 dark:text-slate-400">' +
+            '<i class="fa-solid ' + pay.icon + ' mr-1 text-slate-400"></i>' + pay[currentLang] +
+          '</td>' +
+          '<td class="px-4 py-3.5 text-xs font-mono text-slate-500">' +
+            (t.reference || '-') +
+          '</td>' +
+          '<td class="px-4 py-3.5 text-right font-black text-base ' + (isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400') + '">' +
+            (isIncome ? '+' : '-') + formatMoney(t.amount) +
+          '</td>' +
+          '<td class="px-4 py-3.5 text-center">' +
+            '<div class="inline-flex items-center space-x-1">' +
+              '<button onclick="viewVoucher(\'' + t.id + '\')" class="p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800 transition-colors" title="View Voucher">' +
+                '<i class="fa-solid fa-receipt text-xs"></i>' +
+              '</button>' +
+              '<button onclick="editTransaction(\'' + t.id + '\')" class="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors" title="Edit">' +
+                '<i class="fa-solid fa-pen text-xs"></i>' +
+              '</button>' +
+              '<button onclick="deleteTransaction(\'' + t.id + '\')" class="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 transition-colors" title="Delete">' +
+                '<i class="fa-solid fa-trash-can text-xs"></i>' +
+              '</button>' +
+            '</div>' +
+          '</td>';
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderDaybook() {
+      var container = document.getElementById('daybookContainer');
+      container.innerHTML = '';
+
+      var dateMap = {};
+      transactions.forEach(function(t) {
+        if (!dateMap[t.date]) {
+          dateMap[t.date] = { date: t.date, income: 0, expense: 0, items: [] };
+        }
+        dateMap[t.date].items.push(t);
+        if (t.type === 'income') dateMap[t.date].income += Number(t.amount || 0);
+        else dateMap[t.date].expense += Number(t.amount || 0);
+      });
+
+      var sortedDates = Object.keys(dateMap).sort().reverse();
+
+      if (sortedDates.length === 0) {
+        container.innerHTML = '<div class="p-8 text-center text-slate-400">ഡാറ്റ ലഭ്യമല്ല</div>';
+        return;
+      }
+
+      sortedDates.forEach(function(dStr, idx) {
+        var group = dateMap[dStr];
+        var net = group.income - group.expense;
+
+        var itemsHtml = group.items.map(function(item) {
+          var cat = getCategoryInfo(item.type, item.category);
+          var pay = getPaymentInfo(item.paymentMethod);
+          var isInc = item.type === 'income';
+          return (
+            '<div class="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 text-xs">' +
+              '<div class="flex items-center space-x-3">' +
+                '<div class="w-8 h-8 rounded-xl ' + (isInc ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600') + ' flex items-center justify-center">' +
+                  '<i class="fa-solid ' + (isInc ? 'fa-arrow-down-left' : 'fa-arrow-up-right') + '"></i>' +
+                '</div>' +
+                '<div>' +
+                  '<div class="font-bold text-slate-900 dark:text-white">' + item.description + '</div>' +
+                  '<div class="text-[11px] text-slate-400">' + (item.party || '') + ' • ' + cat[currentLang] + ' • ' + pay[currentLang] + '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="text-right">' +
+                '<span class="font-black text-sm ' + (isInc ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400') + '">' +
+                  (isInc ? '+' : '-') + formatMoney(item.amount) +
+                '</span>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+
+        var dObj = new Date(dStr);
+        var card = document.createElement('div');
+        card.className = 'glass-card rounded-3xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm transition-all';
+        card.innerHTML = 
+          '<div class="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-900/50" onclick="toggleDaybookCollapse(\'daybook-card-' + idx + '\')">' +
+            '<div class="flex items-center space-x-3">' +
+              '<div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex flex-col items-center justify-center font-bold">' +
+                '<span class="text-xs uppercase">' + dObj.toLocaleString(currentLang === 'ml' ? 'ml-IN' : 'en-US', { month: 'short' }) + '</span>' +
+                '<span class="text-base font-black leading-none">' + dObj.getDate() + '</span>' +
+              '</div>' +
+              '<div>' +
+                '<h4 class="font-black text-slate-900 dark:text-white text-base">' + formatDate(dStr) + '</h4>' +
+                '<p class="text-xs text-slate-500">' + group.items.length + ' ഇടപാടുകൾ രേഖപ്പെടുത്തി</p>' +
+              '</div>' +
+            '</div>' +
+            '<div class="flex items-center gap-4 text-xs font-bold self-end sm:self-auto">' +
+              '<span class="text-emerald-600 dark:text-emerald-400">വരവ്: ' + formatMoney(group.income) + '</span>' +
+              '<span class="text-rose-600 dark:text-rose-400">ചിലവ്: ' + formatMoney(group.expense) + '</span>' +
+              '<span class="' + (net >= 0 ? 'text-slate-900 dark:text-white' : 'text-rose-600 font-black') + '">നീക്കിയിരിപ്പ്: ' + formatMoney(net) + '</span>' +
+              '<i id="daybook-icon-' + idx + '" class="fa-solid fa-chevron-down text-slate-400 transition-transform"></i>' +
+            '</div>' +
+          '</div>' +
+          '<div id="daybook-card-' + idx + '" class="border-t border-slate-100 dark:border-slate-800 p-4 space-y-2 bg-slate-50/50 dark:bg-slate-900/40">' +
+            itemsHtml +
+          '</div>';
+        container.appendChild(card);
+      });
+    }
+
+    function toggleDaybookCollapse(id) {
+      var el = document.getElementById(id);
+      var icon = el.previousElementSibling.querySelector('.fa-chevron-down');
+      if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      } else {
+        el.classList.add('hidden');
+        if (icon) icon.style.transform = 'rotate(-90deg)';
+      }
+    }
+
+    function collapseAllDaybook(collapse) {
+      document.querySelectorAll('[id^="daybook-card-"]').forEach(function(el) {
+        if (collapse) el.classList.add('hidden');
+        else el.classList.remove('hidden');
+      });
+    }
+
+    function renderAnalyticsView() {
+      var totalExpense = 0;
+      var maxExpense = 0;
+      var maxExpenseDesc = '-';
+      var incomeSources = {};
+      var dates = new Set();
+
+      transactions.forEach(function(t) {
+        var amt = Number(t.amount || 0);
+        dates.add(t.date);
+        if (t.type === 'expense') {
+          totalExpense += amt;
+          if (amt > maxExpense) {
+            maxExpense = amt;
+            maxExpenseDesc = t.description + ' (' + formatDate(t.date) + ')';
+          }
+        } else {
+          incomeSources[t.category] = (incomeSources[t.category] || 0) + amt;
+        }
+      });
+
+      var uniqueDays = dates.size || 1;
+      var avgDaily = totalExpense / uniqueDays;
+
+      document.getElementById('analyticAvgDailyExpense').innerText = formatMoney(avgDaily);
+      document.getElementById('analyticMaxSingleExpense').innerText = formatMoney(maxExpense);
+      document.getElementById('analyticMaxExpenseNote').innerText = maxExpenseDesc;
+
+      var topSourceKey = '';
+      var topSourceAmt = 0;
+      Object.keys(incomeSources).forEach(function(k) {
+        if (incomeSources[k] > topSourceAmt) {
+          topSourceAmt = incomeSources[k];
+          topSourceKey = k;
+        }
+      });
+
+      if (topSourceKey) {
+        var cat = getCategoryInfo('income', topSourceKey);
+        document.getElementById('analyticTopIncomeSource').innerText = cat[currentLang];
+        document.getElementById('analyticTopIncomeAmount').innerText = formatMoney(topSourceAmt);
+      }
+
+      renderAnalyticsCharts();
+      renderCategoryRanking();
+    }
+
+    function renderAnalyticsCharts() {
+      var payCounts = {};
+      transactions.forEach(function(t) {
+        payCounts[t.paymentMethod] = (payCounts[t.paymentMethod] || 0) + Number(t.amount || 0);
+      });
+
+      var payLabels = Object.keys(payCounts).map(function(k) { return getPaymentInfo(k)[currentLang]; });
+      var payValues = Object.values(payCounts);
+
+      var ctxPay = document.getElementById('paymentMethodChart');
+      if (ctxPay) {
+        if (charts.payment) charts.payment.destroy();
+        charts.payment = new Chart(ctxPay.getContext('2d'), {
+          type: 'pie',
+          data: {
+            labels: payLabels,
+            datasets: [{
+              data: payValues,
+              backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+          }
+        });
+      }
+
+      var incCounts = {};
+      transactions.filter(function(t) { return t.type === 'income'; }).forEach(function(t) {
+        incCounts[t.category] = (incCounts[t.category] || 0) + Number(t.amount || 0);
+      });
+
+      var incLabels = Object.keys(incCounts).map(function(k) { return getCategoryInfo('income', k)[currentLang]; });
+      var incValues = Object.values(incCounts);
+
+      var ctxInc = document.getElementById('incomeSourcesChart');
+      if (ctxInc) {
+        if (charts.incomeSources) charts.incomeSources.destroy();
+        charts.incomeSources = new Chart(ctxInc.getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: incLabels,
+            datasets: [{
+              data: incValues,
+              backgroundColor: ['#059669', '#2563eb', '#06b6d4', '#6366f1', '#84cc16', '#14b8a6', '#a855f7']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+          }
+        });
+      }
+    }
+
+    function renderCategoryRanking() {
+      var container = document.getElementById('categoryRankingList');
+      container.innerHTML = '';
+
+      var expCategories = {};
+      var totalExp = 0;
+
+      transactions.filter(function(t) { return t.type === 'expense'; }).forEach(function(t) {
+        var amt = Number(t.amount || 0);
+        totalExp += amt;
+        expCategories[t.category] = (expCategories[t.category] || 0) + amt;
+      });
+
+      var sorted = Object.keys(expCategories).sort(function(a, b) { return expCategories[b] - expCategories[a]; });
+
+      sorted.forEach(function(catKey, index) {
+        var amt = expCategories[catKey];
+        var pct = totalExp > 0 ? ((amt / totalExp) * 100).toFixed(1) : 0;
+        var cat = getCategoryInfo('expense', catKey);
+
+        var row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 text-xs';
+        row.innerHTML = 
+          '<div class="flex items-center space-x-3">' +
+            '<span class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold text-[11px]">' + (index + 1) + '</span>' +
+            '<div class="w-8 h-8 rounded-xl bg-' + cat.color + '-100 dark:bg-' + cat.color + '-950/60 text-' + cat.color + '-600 flex items-center justify-center">' +
+              '<i class="fa-solid ' + cat.icon + '"></i>' +
+            '</div>' +
+            '<div>' +
+              '<span class="font-bold text-slate-800 dark:text-slate-200">' + cat[currentLang] + '</span>' +
+              '<div class="w-32 sm:w-48 bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mt-1">' +
+                '<div class="bg-rose-500 h-full rounded-full" style="width: ' + pct + '%"></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="text-right">' +
+            '<div class="font-black text-slate-900 dark:text-white">' + formatMoney(amt) + '</div>' +
+            '<div class="text-slate-400 font-semibold">' + pct + '% വിഹിതം</div>' +
+          '</div>';
+        container.appendChild(row);
+      });
+    }
+
+    function renderCharts() {
+      var months = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10'];
+      var monthNamesMl = ['ജനു', 'ഫെബ്രു', 'മാർച്ച്', 'ഏപ്രിൽ', 'മെയ്', 'ജൂൺ', 'ജൂലൈ', 'ഓഗ', 'സെപ്റ്റം', 'ഒക്ടോ'];
+      var monthNamesEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+      var labels = currentLang === 'ml' ? monthNamesMl : monthNamesEn;
+
+      var incData = new Array(months.length).fill(0);
+      var expData = new Array(months.length).fill(0);
+
+      transactions.forEach(function(t) {
+        if (!t.date) return;
+        var prefix = t.date.substring(0, 7);
+        var idx = months.indexOf(prefix);
+        if (idx !== -1) {
+          var amt = Number(t.amount || 0);
+          if (t.type === 'income') incData[idx] += amt;
+          else expData[idx] += amt;
+        }
+      });
+
+      var ctxTrend = document.getElementById('monthlyTrendChart');
+      if (ctxTrend) {
+        if (charts.trend) charts.trend.destroy();
+        charts.trend = new Chart(ctxTrend.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: currentLang === 'ml' ? 'വരവ് (Income)' : 'Income',
+                data: incData,
+                backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                borderRadius: 8
+              },
+              {
+                label: currentLang === 'ml' ? 'ചിലവ് (Expense)' : 'Expense',
+                data: expData,
+                backgroundColor: 'rgba(244, 63, 94, 0.85)',
+                borderRadius: 8
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top', labels: { font: { family: 'Noto Sans Malayalam' } } }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(val) { return '₹' + (val >= 1000 ? (val / 1000) + 'k' : val); }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      var ctxDonut = document.getElementById('categoryDonutChart');
+      if (ctxDonut) {
+        var catMap = {};
+        transactions.filter(function(t) { return t.type === 'expense'; }).forEach(function(t) {
+          catMap[t.category] = (catMap[t.category] || 0) + Number(t.amount || 0);
+        });
+
+        var topCatKeys = Object.keys(catMap).sort(function(a, b) { return catMap[b] - catMap[a]; }).slice(0, 6);
+        var catLabels = topCatKeys.map(function(k) { return getCategoryInfo('expense', k)[currentLang]; });
+        var catValues = topCatKeys.map(function(k) { return catMap[k]; });
+
+        if (charts.donut) charts.donut.destroy();
+        charts.donut = new Chart(ctxDonut.getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: catLabels,
+            datasets: [{
+              data: catValues,
+              backgroundColor: ['#f43f5e', '#fb923c', '#eab308', '#3b82f6', '#a855f7', '#14b8a6']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+            }
+          }
+        });
+      }
+    }
+
+    function renderStatement() {
+      var now = new Date();
+      document.getElementById('statementGeneratedDate').innerText = 'തയ്യാറാക്കിയ തീയതി: ' + formatDate(now.toISOString().split('T')[0]) + ' (' + now.toLocaleTimeString() + ')';
+      
+      var inc = 0;
+      var exp = 0;
+      var sorted = transactions.slice().sort(function(a, b) { return a.date > b.date ? 1 : -1; });
+
+      var tbody = document.getElementById('statementTableBody');
+      tbody.innerHTML = '';
+
+      sorted.forEach(function(t, i) {
+        var amt = Number(t.amount || 0);
+        var isInc = t.type === 'income';
+        if (isInc) inc += amt;
+        else exp += amt;
+
+        var tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50';
+        tr.innerHTML = 
+          '<td class="py-2 px-2 text-slate-500">' + (i + 1) + '</td>' +
+          '<td class="py-2 px-2 font-semibold">' + t.date + '</td>' +
+          '<td class="py-2 px-2 font-bold ' + (isInc ? 'text-emerald-700' : 'text-rose-700') + '">' + (isInc ? 'വരവ്' : 'ചിലവ്') + '</td>' +
+          '<td class="py-2 px-2 font-medium">' + t.description + (t.party ? (' (' + t.party + ')') : '') + '</td>' +
+          '<td class="py-2 px-2 text-slate-600">' + getCategoryInfo(t.type, t.category)[currentLang] + '</td>' +
+          '<td class="py-2 px-2 text-slate-500">' + getPaymentInfo(t.paymentMethod)[currentLang] + '</td>' +
+          '<td class="py-2 px-2 text-right font-bold text-emerald-700">' + (isInc ? formatMoney(amt) : '-') + '</td>' +
+          '<td class="py-2 px-2 text-right font-bold text-rose-700">' + (!isInc ? formatMoney(amt) : '-') + '</td>';
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('statementIncomeTotal').innerText = formatMoney(inc);
+      document.getElementById('statementExpenseTotal').innerText = formatMoney(exp);
+      document.getElementById('statementNetTotal').innerText = formatMoney(inc - exp);
+    }
+
+    function printReport() {
+      renderStatement();
+      window.print();
+    }
+
+    function openTransactionModal(type) {
+      type = type || 'income';
+      document.getElementById('editTxnId').value = '';
+      document.getElementById('txnTypeInput').value = type;
+      
+      var isIncome = type === 'income';
+      var headerBg = document.getElementById('modalHeaderBg');
+      var headerIcon = document.getElementById('modalHeaderIcon');
+      var title = document.getElementById('modalTitle');
+      var subtitle = document.getElementById('modalSubtitle');
+      var submitBtn = document.getElementById('modalSubmitBtn');
+
+      if (isIncome) {
+        headerBg.className = 'px-6 py-4 bg-emerald-600 text-white flex items-center justify-between transition-colors';
+        headerIcon.className = 'fa-solid fa-circle-plus text-xl';
+        title.innerText = currentLang === 'ml' ? 'പുതിയ വരവ് ചേർക്കുക' : 'Add New Income';
+        subtitle.innerText = currentLang === 'ml' ? 'വരുമാന സംബന്ധമായ വിവരങ്ങൾ രേഖപ്പെടുത്തുക' : 'Record your incoming cash or earnings';
+        submitBtn.className = 'px-6 py-2.5 rounded-2xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/25 active:scale-95 transition-all';
+      } else {
+        headerBg.className = 'px-6 py-4 bg-rose-600 text-white flex items-center justify-between transition-colors';
+        headerIcon.className = 'fa-solid fa-circle-minus text-xl';
+        title.innerText = currentLang === 'ml' ? 'പുതിയ ചിലവ് ചേർക്കുക' : 'Add New Expense';
+        subtitle.innerText = currentLang === 'ml' ? 'ചിലവഴിച്ച തുകയുടെ വിവരങ്ങൾ രേഖപ്പെടുത്തുക' : 'Record your expense or outgoing payment';
+        submitBtn.className = 'px-6 py-2.5 rounded-2xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/25 active:scale-95 transition-all';
+      }
+
+      document.getElementById('txnAmount').value = '';
+      document.getElementById('txnDescription').value = '';
+      document.getElementById('txnParty').value = '';
+      document.getElementById('txnReference').value = '';
+      document.getElementById('txnTags').value = '';
+      
+      var now = new Date();
+      document.getElementById('txnDate').value = now.toISOString().split('T')[0];
+      document.getElementById('txnTime').value = now.toTimeString().substring(0, 5);
+
+      updateModalCategoryOptions(type);
+
+      document.getElementById('transactionModal').classList.remove('hidden');
+      setTimeout(function() { document.getElementById('txnAmount').focus(); }, 100);
+    }
+
+    function closeTransactionModal() {
+      document.getElementById('transactionModal').classList.add('hidden');
+    }
+
+    function addQuickAmount(delta) {
+      var el = document.getElementById('txnAmount');
+      var cur = Number(el.value || 0);
+      el.value = (cur + delta).toFixed(0);
+    }
+
+    function handleTransactionSubmit(e) {
+      e.preventDefault();
+      var editId = document.getElementById('editTxnId').value;
+      var type = document.getElementById('txnTypeInput').value;
+      var amount = Number(document.getElementById('txnAmount').value);
+      var description = document.getElementById('txnDescription').value.trim();
+      var category = document.getElementById('txnCategory').value;
+      var paymentMethod = document.getElementById('txnPaymentMethod').value;
+      var date = document.getElementById('txnDate').value;
+      var time = document.getElementById('txnTime').value;
+      var party = document.getElementById('txnParty').value.trim();
+      var reference = document.getElementById('txnReference').value.trim();
+      var tagsRaw = document.getElementById('txnTags').value.trim();
+      var tags = tagsRaw ? tagsRaw.split(',').map(function(s) { 
+        var str = s.trim();
+        return str.startsWith('#') ? str : '#' + str; 
+      }) : [];
+
+      if (!amount || amount <= 0 || !description || !date) {
+        showToast('ദയവായി മുഴുവൻ വിവരങ്ങളും കൃത്യമായി നൽകുക', 'error');
+        return;
+      }
+
+      if (editId) {
+        var index = transactions.findIndex(function(t) { return t.id === editId; });
+        if (index !== -1) {
+          transactions[index] = Object.assign({}, transactions[index], {
+            type: type,
+            amount: amount,
+            description: description,
+            category: category,
+            paymentMethod: paymentMethod,
+            date: date,
+            time: time,
+            party: party,
+            reference: reference,
+            tags: tags
+          });
+          showToast('ഇടപാട് വിജയകരമായി അപ്‌ഡേറ്റ് ചെയ്തു!');
+        }
+      } else {
+        var newTxn = {
+          id: 'TXN-' + Date.now(),
+          type: type,
+          amount: amount,
+          description: description,
+          category: category,
+          paymentMethod: paymentMethod,
+          date: date,
+          time: time,
+          party: party,
+          reference: reference,
+          tags: tags,
+          status: 'completed'
+        };
+        transactions.unshift(newTxn);
+        showToast('പുതിയ ഇടപാട് വിജയകരമായി ചേർത്തു!');
+      }
+
+      saveData();
+      closeTransactionModal();
+      updateAllViews();
+    }
+
+    function editTransaction(id) {
+      var t = transactions.find(function(x) { return x.id === id; });
+      if (!t) return;
+      closeVoucherModal();
+
+      openTransactionModal(t.type);
+      document.getElementById('editTxnId').value = t.id;
+      document.getElementById('txnAmount').value = t.amount;
+      document.getElementById('txnDescription').value = t.description;
+      document.getElementById('txnParty').value = t.party || '';
+      document.getElementById('txnReference').value = t.reference || '';
+      document.getElementById('txnDate').value = t.date;
+      document.getElementById('txnTime').value = t.time || '';
+      document.getElementById('txnTags').value = (t.tags || []).join(', ');
+
+      updateModalCategoryOptions(t.type, t.category);
+      document.getElementById('txnPaymentMethod').value = t.paymentMethod;
+
+      document.getElementById('modalTitle').innerText = currentLang === 'ml' ? 'ഇടപാട് എഡിറ്റ് ചെയ്യുക' : 'Edit Transaction';
+    }
+
+    function deleteTransaction(id) {
+      var t = transactions.find(function(x) { return x.id === id; });
+      if (!t) return;
+      var confMsg = currentLang === 'ml' 
+        ? ('"' + t.description + '" എന്ന ഇടപാട് ഇല്ലാതാക്കാൻ ഉറപ്പാണോ?')
+        : ('Are you sure you want to delete "' + t.description + '"?');
+
+      if (confirm(confMsg)) {
+        transactions = transactions.filter(function(x) { return x.id !== id; });
+        saveData();
+        closeVoucherModal();
+        updateAllViews();
+        showToast('ഇടപാട് ഇല്ലാതാക്കി!');
+      }
+    }
+
+    function viewVoucher(id) {
+      var t = transactions.find(function(x) { return x.id === id; });
+      if (!t) return;
+
+      var isInc = t.type === 'income';
+      var header = document.getElementById('voucherHeader');
+      header.className = isInc ? 'p-6 text-center text-white bg-emerald-600 relative' : 'p-6 text-center text-white bg-rose-600 relative';
+      
+      document.getElementById('voucherTypeBadge').innerText = isInc ? (currentLang === 'ml' ? 'വരവ് രസീത് (INCOME)' : 'INCOME RECEIPT') : (currentLang === 'ml' ? 'ചിലവ് രസീത് (EXPENSE)' : 'EXPENSE VOUCHER');
+      document.getElementById('voucherAmount').innerText = (isInc ? '+' : '-') + formatMoney(t.amount);
+      document.getElementById('voucherDescription').innerText = t.description;
+
+      var cat = getCategoryInfo(t.type, t.category);
+      var pay = getPaymentInfo(t.paymentMethod);
+
+      var list = document.getElementById('voucherDetailsList');
+      list.innerHTML = 
+        '<div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">' +
+          '<span class="text-slate-400">തീയതി & സമയം:</span>' +
+          '<span class="font-bold text-slate-800 dark:text-slate-200">' + formatDate(t.date) + ' (' + (t.time || '12:00') + ')</span>' +
+        '</div>' +
+        '<div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">' +
+          '<span class="text-slate-400">വിഭാഗം (Category):</span>' +
+          '<span class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">' +
+            '<i class="fa-solid ' + cat.icon + '"></i> ' + cat[currentLang] +
+          '</span>' +
+        '</div>' +
+        '<div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">' +
+          '<span class="text-slate-400">പേയ്മെന്റ് രീതി:</span>' +
+          '<span class="font-bold text-slate-800 dark:text-slate-200">' + pay[currentLang] + '</span>' +
+        '</div>' +
+        (t.party ? (
+        '<div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">' +
+          '<span class="text-slate-400">വ്യക്തി / സ്ഥാപനം:</span>' +
+          '<span class="font-bold text-slate-800 dark:text-slate-200">' + t.party + '</span>' +
+        '</div>') : '') +
+        (t.reference ? (
+        '<div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">' +
+          '<span class="text-slate-400">റഫറൻസ് / ബിൽ #:</span>' +
+          '<span class="font-mono text-slate-800 dark:text-slate-200">' + t.reference + '</span>' +
+        '</div>') : '') +
+        (t.tags && t.tags.length > 0 ? (
+        '<div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">' +
+          '<span class="text-slate-400">ടാഗുകൾ:</span>' +
+          '<span class="font-medium text-emerald-600">' + t.tags.join(', ') + '</span>' +
+        '</div>') : '') +
+        '<div class="flex justify-between py-1.5">' +
+          '<span class="text-slate-400">ID:</span>' +
+          '<span class="font-mono text-[10px] text-slate-400">' + t.id + '</span>' +
+        '</div>';
+
+      document.getElementById('voucherEditBtn').onclick = function() { editTransaction(t.id); };
+      document.getElementById('voucherDeleteBtn').onclick = function() { deleteTransaction(t.id); };
+
+      document.getElementById('voucherModal').classList.remove('hidden');
+    }
+
+    function closeVoucherModal() {
+      document.getElementById('voucherModal').classList.add('hidden');
+    }
+
+    var toastTimeout = null;
+    function showToast(msg, type) {
+      type = type || 'success';
+      var toast = document.getElementById('toastNotification');
+      var icon = document.getElementById('toastIcon');
+      document.getElementById('toastMsg').innerText = msg;
+      
+      if (type === 'error') {
+        icon.className = 'fa-solid fa-triangle-exclamation text-rose-400';
+      } else {
+        icon.className = 'fa-solid fa-circle-check text-emerald-400';
+      }
+
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(function() {
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 3000);
+    }
+
+    function toggleDataMenu() {
+      var menu = document.getElementById('dataMenuDropdown');
+      menu.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', function(e) {
+      var btn = document.getElementById('dataMenuBtn');
+      var menu = document.getElementById('dataMenuDropdown');
+      if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.add('hidden');
+      }
+    });
+
+    function exportToCSV() {
+      var headers = ['ID', 'Date', 'Time', 'Type (വരവ്/ചിലവ്)', 'Description', 'Category', 'Payment Method', 'Party', 'Amount (INR)', 'Reference', 'Tags'];
+      var rows = transactions.map(function(t) {
+        return [
+          t.id,
+          t.date,
+          t.time || '',
+          t.type === 'income' ? 'വരവ് (Income)' : 'ചിലവ് (Expense)',
+          '"' + (t.description || '').replace(/"/g, '""') + '"',
+          getCategoryInfo(t.type, t.category).en,
+          getPaymentInfo(t.paymentMethod).en,
+          '"' + (t.party || '').replace(/"/g, '""') + '"',
+          t.amount,
+          '"' + (t.reference || '').replace(/"/g, '""') + '"',
+          '"' + (t.tags || []).join(' ') + '"'
+        ];
+      });
+
+      var csvContent = '\uFEFF' + [headers.join(','), ...rows.map(function(r) { return r.join(','); })].join('\n');
+      var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'varavu_chilavu_' + new Date().toISOString().split('T')[0] + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Excel / CSV ഫയൽ ഡൗൺലോഡ് ചെയ്തു!');
+    }
+
+    function exportToJSON() {
+      var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(transactions, null, 2));
+      var a = document.createElement('a');
+      a.href = dataStr;
+      a.download = 'varavu_chilavu_backup_' + new Date().toISOString().split('T')[0] + '.json';
+      a.click();
+      showToast('ബാക്കപ്പ് ഫയൽ ഡൗൺലോഡ് ചെയ്തു!');
+    }
+
+    function importFromJSON(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+
+      var reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          var imported = JSON.parse(event.target.result);
+          if (Array.isArray(imported)) {
+            transactions = imported;
+            saveData();
+            updateAllViews();
+            showToast('ബാക്കപ്പ് വിവരങ്ങൾ വിജയകരമായി റീസ്റ്റോർ ചെയ്തു!');
+          } else {
+            showToast('അസാധുവായ ബാക്കപ്പ് ഫയൽ!', 'error');
+          }
+        } catch (err) {
+          showToast('ഫയൽ വായിക്കുന്നതിൽ തകരാർ!', 'error');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    function confirmResetSampleData() {
+      if (confirm('സാംപിൾ ഡാറ്റ വീണ്ടെടുക്കാൻ ഉറപ്പാണോ? നിലവിലുള്ള മാറ്റങ്ങൾ പഴയപടിയാകും.')) {
+        transactions = DEFAULT_TRANSACTIONS.slice();
+        saveData();
+        updateAllViews();
+        showToast('സാംപിൾ ഡാറ്റ വീണ്ടെടുത്തു!');
+      }
+    }
+
+    function confirmClearAllData() {
+      if (confirm('ശ്രദ്ധിക്കുക: എല്ലാ വരവ് ചിലവ് ഡാറ്റയും പൂർണ്ണമായി മായ്ക്കാൻ ഉറപ്പാണോ?')) {
+        transactions = [];
+        saveData();
+        updateAllViews();
+        showToast('എല്ലാ വിവരങ്ങളും മായ്ച്ചു!');
+      }
+    }
+
+    function initUI() {
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeTransactionModal();
+          closeVoucherModal();
+        }
+      });
+    }
+
+  </script>
+</body>
+</html>
