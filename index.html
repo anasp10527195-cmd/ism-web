@@ -5393,7 +5393,7 @@ AD-102,Jane Smith,Class 10" class="w-full p-3 rounded-xl border font-mono text-x
       if (!q) { hideAutocomplete(box); return; }
       google.script.run.withSuccessHandler(list => {
         if (seq !== autocompleteRequestSeq.student || input.value.trim().toLowerCase() !== q) return;
-        const html = (list || []).slice(0,8).map(s => `<button type="button" onmousedown="selectStudentLoginSuggestion('${escapeHtml(String(s.adNo))}', event)" ontouchstart="selectStudentLoginSuggestion('${escapeHtml(String(s.adNo))}', event)" class="suggestion-item student-login-suggestion w-full text-left p-3 bg-white border-b cursor-pointer hover:bg-teal-50" data-student-adno="${escapeHtml(String(s.adNo))}">${escapeHtml(String(s.adNo))} — ${escapeHtml(String(s.name))}</button>`).join('');
+        const html = (list || []).slice(0,8).map(s => `<button type="button" onmousedown="selectStudentLoginSuggestion('${escapeHtml(String(s.adNo))}', event)" ontouchstart="selectStudentLoginSuggestion('${escapeHtml(String(s.adNo))}', event)" class="suggestion-item student-login-suggestion w-full text-left p-3 border-b cursor-pointer" data-student-adno="${escapeHtml(String(s.adNo))}"><span class="font-bold mr-2 text-teal-800">${escapeHtml(String(s.adNo))}</span><span class="opacity-50 mr-2 text-slate-500">—</span><span class="font-semibold text-slate-900">${escapeHtml(String(s.name))}</span></button>`).join('');
         showAutocomplete(box, html);
       }).withFailureHandler(() => {
         if (seq === autocompleteRequestSeq.student) hideAutocomplete(box);
@@ -6608,7 +6608,7 @@ header #logout-btn:hover {
 button[onclick*="openEditStock"],
 button[onclick*="openEditPurchase"],
 button[onclick*="openEditPayment"],
-button[class*="bg-teal-50"] {
+button[class*="bg-teal-50"]:not(.suggestion-item):not(.ledger-student-option):not(.ledger-union-option) {
   background: #f0fdfa !important;
   border: 1.5px solid #14b8a6 !important;
   color: #0f766e !important;
@@ -6620,18 +6620,18 @@ button[class*="bg-teal-50"] {
 button[onclick*="openEditStock"]:hover,
 button[onclick*="openEditPurchase"]:hover,
 button[onclick*="openEditPayment"]:hover,
-button[class*="bg-teal-50"]:hover {
+button[class*="bg-teal-50"]:not(.suggestion-item):not(.ledger-student-option):not(.ledger-union-option):hover {
   background: #0d9488 !important;
   color: #ffffff !important;
   border-color: #0d9488 !important;
   box-shadow: 0 2px 8px rgba(13, 148, 136, 0.35) !important;
 }
 button[onclick*="openEditStock"] i,
-button[class*="bg-teal-50"] i {
+button[class*="bg-teal-50"]:not(.suggestion-item):not(.ledger-student-option):not(.ledger-union-option) i {
   color: #0f766e !important;
 }
 button[onclick*="openEditStock"]:hover i,
-button[class*="bg-teal-50"]:hover i {
+button[class*="bg-teal-50"]:not(.suggestion-item):not(.ledger-student-option):not(.ledger-union-option):hover i {
   color: #ffffff !important;
 }
 
@@ -6703,18 +6703,79 @@ button[onclick*="showView('view-landing')"]:hover {
 }
 
 /* 8. Autocomplete Suggestion Items */
-button.suggestion-item {
+button.suggestion-item,
+.suggestion-item,
+.student-login-suggestion,
+.identifier-suggestion,
+.product-suggestion,
+.edit-product-suggestion,
+.ledger-student-option,
+.ledger-union-option {
   box-shadow: none !important;
   border-radius: 0 !important;
-  background: transparent !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
   justify-content: flex-start !important;
   display: flex !important;
+  align-items: center !important;
   border: none !important;
   border-bottom: 1px solid #f1f5f9 !important;
-}
-button.suggestion-item:hover {
-  background: #f0fdfa !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+  padding: 12px 14px !important;
+  width: 100% !important;
+  cursor: pointer !important;
   transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+
+button.suggestion-item *,
+.suggestion-item *,
+.student-login-suggestion *,
+.identifier-suggestion *,
+.product-suggestion *,
+.edit-product-suggestion *,
+.ledger-student-option *,
+.ledger-union-option * {
+  color: inherit !important;
+  pointer-events: none !important;
+}
+
+button.suggestion-item:hover,
+button.suggestion-item:focus,
+.suggestion-item:hover,
+.suggestion-item:focus,
+.student-login-suggestion:hover,
+.student-login-suggestion:focus,
+.identifier-suggestion:hover,
+.identifier-suggestion:focus,
+.product-suggestion:hover,
+.product-suggestion:focus,
+.edit-product-suggestion:hover,
+.edit-product-suggestion:focus,
+.ledger-student-option:hover,
+.ledger-student-option:focus,
+.ledger-union-option:hover,
+.ledger-union-option:focus {
+  background: #ccfbf1 !important;
+  color: #0f766e !important;
+  border-bottom: 1px solid #99f6e4 !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+button.suggestion-item:hover *,
+button.suggestion-item:focus *,
+.suggestion-item:hover *,
+.suggestion-item:focus *,
+.student-login-suggestion:hover *,
+.student-login-suggestion:focus * {
+  color: #0f766e !important;
 }
 
 /* 9. Navigation Tabs & Sub-tabs */
