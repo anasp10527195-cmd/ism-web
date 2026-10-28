@@ -36,7 +36,9 @@
     },
 
     async getStudentDetails(adNo) {
-      const cleanAdNo = String(adNo || '').trim();
+      let cleanAdNo = String(adNo || '').trim();
+      if (cleanAdNo.includes('—')) cleanAdNo = cleanAdNo.split('—')[0].trim();
+      if (cleanAdNo.includes(' - ')) cleanAdNo = cleanAdNo.split(' - ')[0].trim();
       let students = await api(`Students?AdNo=eq.${encodeURIComponent(cleanAdNo)}`);
       if (!students || students.length === 0) {
         if (!isNaN(cleanAdNo)) {

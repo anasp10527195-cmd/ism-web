@@ -1886,7 +1886,9 @@ input:where([type='button'], [type='reset'], [type='submit']),
     },
 
     async getStudentDetails(adNo) {
-      const cleanAdNo = String(adNo || '').trim();
+      let cleanAdNo = String(adNo || '').trim();
+      if (cleanAdNo.includes('—')) cleanAdNo = cleanAdNo.split('—')[0].trim();
+      if (cleanAdNo.includes(' - ')) cleanAdNo = cleanAdNo.split(' - ')[0].trim();
       let students = await api(`Students?AdNo=eq.${encodeURIComponent(cleanAdNo)}`);
       if (!students || students.length === 0) {
         if (!isNaN(cleanAdNo)) {
@@ -3293,7 +3295,7 @@ input:where([type='button'], [type='reset'], [type='submit']),
           <div>
             <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Admission Number</label>
             <div class="relative">
-             <input type="text" id="student-adno-input" placeholder="e.g. AD-1001" autocomplete="off" oninput="handleStudentAutocomplete(this)" class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-teal-500 outline-none">
+             <input type="text" id="student-adno-input" placeholder="e.g. AD-1001" autocomplete="off" oninput="handleStudentAutocomplete(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();const b=document.querySelector('#auth-student-form button[onclick*=\'handleStudentLogin\']');if(b)handleStudentLogin(b);}" class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-teal-500 outline-none">
              <div id="student-login-suggestions" class="hidden absolute left-0 right-0 top-full z-40 bg-white border rounded-xl shadow-xl max-h-48 overflow-y-auto"></div>
            </div>
           </div>
@@ -4091,9 +4093,12 @@ AD-102,Jane Smith,Class 10" class="w-full p-3 rounded-xl border font-mono text-x
     }
 
     function handleStudentLogin(btn) {
+      if (window._justSelectedStudentSuggestion) return;
       const adInput = document.getElementById('student-adno-input');
       const msgEl = document.getElementById('studentAuthMsg');
-      const adNo = String(adInput?.value || '').trim();
+      let adNo = String(adInput?.value || '').trim();
+      if (adNo.includes('—')) adNo = adNo.split('—')[0].trim();
+      if (adNo.includes(' - ')) adNo = adNo.split(' - ')[0].trim();
       if (!adNo) {
         if (msgEl) msgEl.innerText = 'Please enter your Admission Number.';
         return;
@@ -5388,20 +5393,36 @@ AD-102,Jane Smith,Class 10" class="w-full p-3 rounded-xl border font-mono text-x
       if (!q) { hideAutocomplete(box); return; }
       google.script.run.withSuccessHandler(list => {
         if (seq !== autocompleteRequestSeq.student || input.value.trim().toLowerCase() !== q) return;
-        const html = (list || []).slice(0,8).map(s => `<button type="button" class="suggestion-item student-login-suggestion w-full text-left p-3 bg-white border-b cursor-pointer hover:bg-teal-50" data-student-adno="${escapeHtml(String(s.adNo))}">${escapeHtml(String(s.adNo))} — ${escapeHtml(String(s.name))}</button>`).join('');
+        const html = (list || []).slice(0,8).map(s => `<button type="button" onmousedown="selectStudentLoginSuggestion('${escapeHtml(String(s.adNo))}', event)" ontouchstart="selectStudentLoginSuggestion('${escapeHtml(String(s.adNo))}', event)" class="suggestion-item student-login-suggestion w-full text-left p-3 bg-white border-b cursor-pointer hover:bg-teal-50" data-student-adno="${escapeHtml(String(s.adNo))}">${escapeHtml(String(s.adNo))} — ${escapeHtml(String(s.name))}</button>`).join('');
         showAutocomplete(box, html);
       }).withFailureHandler(() => {
         if (seq === autocompleteRequestSeq.student) hideAutocomplete(box);
       }).searchStudents(q,'');
     }
 
-    function selectStudentLoginSuggestion(adNo) {
+    function selectStudentLoginSuggestion(adNo, e) {
+      if (e) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      }
       const input = document.getElementById('student-adno-input');
       if (!input) return;
 
-      input.value = String(adNo || '');
+      let cleanAd = String(adNo || '').trim();
+      if (cleanAd.includes('—')) cleanAd = cleanAd.split('—')[0].trim();
+      if (cleanAd.includes(' - ')) cleanAd = cleanAd.split(' - ')[0].trim();
+
+      input.value = cleanAd;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+
       autocompleteRequestSeq.student++;
-      hideAutocomplete(document.getElementById('student-login-suggestions'));
+      const box = document.getElementById('student-login-suggestions');
+      if (box) hideAutocomplete(box);
+
+      window._justSelectedStudentSuggestion = true;
+      setTimeout(() => { window._justSelectedStudentSuggestion = false; }, 350);
+
       input.focus();
     }
 
@@ -5447,7 +5468,7 @@ AD-102,Jane Smith,Class 10" class="w-full p-3 rounded-xl border font-mono text-x
       setTimeout(() => { try { delete node.dataset.selectionHandled; } catch (_) {} }, 500);
 
       if (node.classList.contains('student-login-suggestion')) {
-        selectStudentLoginSuggestion(node.dataset.studentAdno || '');
+        selectStudentLoginSuggestion(node.dataset.studentAdno || '', e);
         return;
       }
 
@@ -5481,9 +5502,14 @@ AD-102,Jane Smith,Class 10" class="w-full p-3 rounded-xl border font-mono text-x
     }
 
     document.addEventListener('pointerdown', handleDynamicSelection, true);
+    document.addEventListener('mousedown', handleDynamicSelection, true);
     document.addEventListener('click', handleDynamicSelection, true);
 
     document.addEventListener('click', function(e) {
+      if (!e.target.closest('#student-adno-input') && !e.target.closest('#student-login-suggestions')) {
+        hideAutocomplete(document.getElementById('student-login-suggestions'));
+      }
+
       const historyToggle = e.target.closest('.history-menu-toggle');
       if (historyToggle) {
         e.preventDefault();
