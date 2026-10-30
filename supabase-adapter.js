@@ -28,7 +28,16 @@
     async loginAdmin(u, p) {
       const cleanU = String(u || '').trim();
       const cleanP = String(p || '').trim();
-      const admins = await api(`Admin?Username=eq.${encodeURIComponent(cleanU)}&Password=eq.${encodeURIComponent(cleanP)}`);
+      let admins = null;
+      try {
+        admins = await api(`admin?Username=eq.${encodeURIComponent(cleanU)}&Password=eq.${encodeURIComponent(cleanP)}`);
+      } catch (err) {
+        if (err && err.message && err.message.includes('schema cache')) {
+          admins = await api(`Admin?Username=eq.${encodeURIComponent(cleanU)}&Password=eq.${encodeURIComponent(cleanP)}`);
+        } else {
+          throw err;
+        }
+      }
       if (admins && admins.length > 0) {
         return { success: true, message: 'Signed in successfully.' };
       }

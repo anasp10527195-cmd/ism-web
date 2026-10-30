@@ -1878,7 +1878,16 @@ input:where([type='button'], [type='reset'], [type='submit']),
     async loginAdmin(u, p) {
       const cleanU = String(u || '').trim();
       const cleanP = String(p || '').trim();
-      const admins = await api(`Admin?Username=eq.${encodeURIComponent(cleanU)}&Password=eq.${encodeURIComponent(cleanP)}`);
+      let admins = null;
+      try {
+        admins = await api(`admin?Username=${encodeURIComponent(cleanU)}&Password=${encodeURIComponent(cleanP)}`);
+      } catch (err) {
+        if (err && err.message && err.message.includes('schema cache')) {
+          admins = await api(`Admin?Username=${encodeURIComponent(cleanU)}&Password=${encodeURIComponent(cleanP)}`);
+        } else {
+          throw err;
+        }
+      }
       if (admins && admins.length > 0) {
         return { success: true, message: 'Signed in successfully.' };
       }
@@ -7640,7 +7649,10 @@ async function saveAdminSettings(btn) {
       'Prefer': 'return=representation'
     };
 
-    var vRes = await fetch(URL + '/rest/v1/Admin?Password=eq.' + encodeURIComponent(cur), { headers: h });
+    var vRes = await fetch(URL + '/rest/v1/admin?Password=eq.' + encodeURIComponent(cur), { headers: h });
+    if (!vRes.ok) {
+      vRes = await fetch(URL + '/rest/v1/Admin?Password=eq.' + encodeURIComponent(cur), { headers: h });
+    }
     var admins = await vRes.json();
     if (!admins || admins.length === 0) {
       ismShowNotif('Error', 'Current password is incorrect.', 'danger');
@@ -7651,9 +7663,14 @@ async function saveAdminSettings(btn) {
     if (usr) patch.Username = usr;
     if (pw1) patch.Password = pw1;
 
-    var pRes = await fetch(URL + '/rest/v1/Admin?Username=eq.' + encodeURIComponent(admins[0].Username), {
+    var pRes = await fetch(URL + '/rest/v1/admin?Username=eq.' + encodeURIComponent(admins[0].Username), {
       method: 'PATCH', headers: h, body: JSON.stringify(patch)
     });
+    if (!pRes.ok) {
+      pRes = await fetch(URL + '/rest/v1/Admin?Username=eq.' + encodeURIComponent(admins[0].Username), {
+        method: 'PATCH', headers: h, body: JSON.stringify(patch)
+      });
+    }
     if (!pRes.ok) throw new Error('Failed to update credentials. Please try again.');
 
     document.getElementById('modal-admin-settings').classList.add('hidden');
