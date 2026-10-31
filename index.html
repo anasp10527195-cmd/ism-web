@@ -1880,10 +1880,10 @@ input:where([type='button'], [type='reset'], [type='submit']),
       const cleanP = String(p || '').trim();
       let admins = null;
       try {
-        admins = await api(`admin?Username=${encodeURIComponent(cleanU)}&Password=${encodeURIComponent(cleanP)}`);
+        admins = await api(`admin?Username=eq.${encodeURIComponent(cleanU)}&Password=eq.${encodeURIComponent(cleanP)}`);
       } catch (err) {
         if (err && err.message && err.message.includes('schema cache')) {
-          admins = await api(`Admin?Username=${encodeURIComponent(cleanU)}&Password=${encodeURIComponent(cleanP)}`);
+          admins = await api(`Admin?Username=eq.${encodeURIComponent(cleanU)}&Password=eq.${encodeURIComponent(cleanP)}`);
         } else {
           throw err;
         }
